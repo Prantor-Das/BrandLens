@@ -1,0 +1,86 @@
+"use client";
+
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import type { ResultsInsight } from "@/lib/results";
+
+function ArrowIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M5 3.5H12.5V11"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M3.5 12.5L12 4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+function getPriorityVariant(priority: ResultsInsight["priority"]) {
+  if (priority === "high") {
+    return "danger";
+  }
+
+  if (priority === "medium") {
+    return "warning";
+  }
+
+  return "outline";
+}
+
+type InsightsPanelProps = {
+  brand: string;
+  insights: ResultsInsight[];
+};
+
+export function InsightsPanel({ brand, insights }: InsightsPanelProps) {
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+          How to improve {brand}&apos;s AI presence
+        </h2>
+        <p className="text-sm text-[var(--foreground-muted)]">
+          The sharpest next moves from this analysis run.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {insights.slice(0, 3).map((insight, index) => (
+          <Card
+            key={`${insight.title}-${index}`}
+            className="animate-fade-in-up"
+            hover
+            padding="lg"
+            style={{ animationDelay: `${index * 150}ms` }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-3">
+                <Badge size="sm" variant={getPriorityVariant(insight.priority)}>
+                  {insight.priority} priority
+                </Badge>
+                <div className="space-y-1.5">
+                  <h3 className="text-base font-semibold text-[var(--foreground)]">{insight.title}</h3>
+                  <p className="text-sm leading-6 text-[var(--foreground-muted)]">{insight.description}</p>
+                </div>
+              </div>
+
+              <span className="mt-0.5 text-[var(--foreground-subtle)]">
+                <ArrowIcon />
+              </span>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
