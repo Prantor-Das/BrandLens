@@ -2,12 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 import { env } from "@/lib/env";
-
-export interface ModelAdapter {
-  id: string;
-  name: string;
-  query: (prompt: string) => Promise<string>;
-}
+import type { ModelAdapter } from "@/lib/types";
 
 type AdapterFactory = () => ModelAdapter | null;
 

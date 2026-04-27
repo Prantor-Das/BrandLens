@@ -1,4 +1,4 @@
-import type { ModelAdapter } from "@/lib/models";
+import type { ModelAdapter } from "@/lib/types";
 
 export interface OrchestratorResult {
   modelId: string;
