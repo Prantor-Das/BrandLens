@@ -1,187 +1,208 @@
-import { prisma } from "@/lib/prisma";
 import { extractEntities } from "@/lib/analysis/extractor";
+import { aggregateAcrossModels } from "@/lib/analysis/aggregator";
+import { calculateVisibilityScore, getScoreLabel } from "@/lib/analysis/scorer";
 import { analyseSentiment } from "@/lib/analysis/sentiment";
-import {
-  calculateVisibilityScore,
-  getScoreLabel
-} from "@/lib/analysis/scorer";
+import { saveBrandResults, saveModelResponses, updateJobStatus } from "@/lib/db/writer";
+import { ExtractionError, safeRun, wrapWithTimeout } from "@/lib/errors";
+import type { OrchestratorResult } from "@/lib/orchestrator";
 import type {
-  AggregateBrandScore,
+  BrandAnalysis,
   EntityResult,
   PerModelResult,
-  PersistedModelResponse,
   PipelineResult,
   SentimentResult
 } from "@/lib/types";
+
+const LLM_TIMEOUT_MS = 30_000;
 
 export interface PipelineParams {
   jobId: string;
   brand: string;
   competitors: string[];
-  modelResponses: PersistedModelResponse[];
+  responses: OrchestratorResult[];
   llmQueryFn: (prompt: string) => Promise<string>;
 }
 
-function getDominantSentiment(sentiments: SentimentResult[]): SentimentResult["sentiment"] {
-  if (sentiments.length === 0) {
-    return "neutral";
-  }
-
-  const average =
-    sentiments.reduce((sum, item) => sum + item.score, 0) / sentiments.length;
-
-  if (average > 0.2) {
-    return "positive";
-  }
-
-  if (average < -0.2) {
-    return "negative";
-  }
-
-  return "neutral";
+function buildEmptyBrandResults(brands: string[]): BrandAnalysis[] {
+  return brands.map((brand) => ({
+    brand,
+    mentions: 0,
+    firstPosition: 999,
+    contexts: [],
+    sentiment: {
+      sentiment: "neutral",
+      score: 0,
+      confidence: 0,
+      reason: "Pipeline fallback"
+    },
+    visibilityScore: 0,
+    scoreLabel: "absent"
+  }));
 }
 
-function aggregateBrandData(
-  perModelResults: PerModelResult[],
-  brands: string[]
-): AggregateBrandScore[] {
-  return brands.map((brand) => {
-    const brandResults = perModelResults
-      .map((model) => model.brands.find((item) => item.brand === brand))
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+async function runExtraction(
+  rawResponse: string,
+  brands: string[],
+  llmQueryFn: (prompt: string) => Promise<string>,
+  label: string
+): Promise<EntityResult[]> {
+  const results = await safeRun(
+    () =>
+      extractEntities(rawResponse, brands, (prompt) =>
+        wrapWithTimeout(llmQueryFn(prompt), LLM_TIMEOUT_MS, `${label} extraction`)
+      ),
+    brands.map((brand) => ({
+      brand,
+      mentions: 0,
+      firstPosition: 999,
+      contexts: []
+    })),
+    `${label} extraction`
+  );
 
-    const totalMentions = brandResults.reduce((sum, item) => sum + item.mentions, 0);
-    const modelsPresent = brandResults.filter((item) => item.mentions > 0).length;
-    const averageVisibilityScore =
-      brandResults.reduce((sum, item) => sum + item.visibilityScore, 0) /
-      Math.max(brandResults.length, 1);
-    const averageSentimentScore =
-      brandResults.reduce((sum, item) => sum + item.sentiment.score, 0) /
-      Math.max(brandResults.length, 1);
+  if (!Array.isArray(results)) {
+    throw new ExtractionError(`${label} extraction returned an invalid payload`);
+  }
+
+  return results;
+}
+
+async function runSentiment(
+  brandName: string,
+  contexts: string[],
+  llmQueryFn: (prompt: string) => Promise<string>,
+  label: string
+): Promise<SentimentResult> {
+  return safeRun(
+    () =>
+      analyseSentiment(brandName, contexts, (prompt) =>
+        wrapWithTimeout(
+          llmQueryFn(prompt),
+          LLM_TIMEOUT_MS,
+          `${label} sentiment:${brandName}`
+        )
+      ),
+    {
+      sentiment: "neutral",
+      score: 0,
+      confidence: 0,
+      reason: "Pipeline fallback"
+    },
+    `${label} sentiment:${brandName}`
+  );
+}
+
+async function analyzeModelResponse(params: {
+  persistedResponse: {
+    id: string;
+    modelId: string;
+    modelName: string;
+    rawResponse: string;
+  };
+  brands: string[];
+  totalModels: number;
+  llmQueryFn: (prompt: string) => Promise<string>;
+}): Promise<PerModelResult> {
+  const label = `${params.persistedResponse.modelName} (${params.persistedResponse.modelId})`;
+  const rawResponse = params.persistedResponse.rawResponse;
+
+  if (!rawResponse.trim()) {
+    const emptyResults = buildEmptyBrandResults(params.brands);
+    await saveBrandResults(params.persistedResponse.id, emptyResults);
 
     return {
-      brand,
-      averageVisibilityScore: Math.round(averageVisibilityScore * 100) / 100,
-      dominantSentiment: getDominantSentiment(
-        brandResults.map((item) => item.sentiment)
-      ),
-      totalMentions,
-      modelsPresent,
-      averageSentimentScore: Math.round(averageSentimentScore * 100) / 100
+      responseId: params.persistedResponse.id,
+      modelId: params.persistedResponse.modelId,
+      modelName: params.persistedResponse.modelName,
+      brands: emptyResults
     };
-  });
-}
+  }
 
-async function persistBrandResults(
-  modelResponseId: string,
-  entities: EntityResult[],
-  sentiments: Map<string, SentimentResult>,
-  visibilityScores: Map<string, number>
-): Promise<void> {
-  await prisma.brandResult.deleteMany({
-    where: {
-      responseId: modelResponseId
-    }
-  });
+  const entities = await runExtraction(
+    rawResponse,
+    params.brands,
+    params.llmQueryFn,
+    label
+  );
 
-  await prisma.brandResult.createMany({
-    data: entities.map((entity) => ({
-      responseId: modelResponseId,
-      brandName: entity.brand,
-      mentionCount: entity.mentions,
-      firstPosition: entity.firstPosition >= 999 ? null : entity.firstPosition,
-      sentimentScore: sentiments.get(entity.brand)?.score ?? 0,
-      visibilityScore: visibilityScores.get(entity.brand) ?? 0
-    }))
-  });
+  const brandResults = await Promise.all(
+    entities.map(async (entity): Promise<BrandAnalysis> => {
+      const sentiment = await runSentiment(
+        entity.brand,
+        entity.contexts,
+        params.llmQueryFn,
+        label
+      );
+      const visibilityScore = calculateVisibilityScore({
+        mentions: entity.mentions,
+        firstPosition: entity.firstPosition,
+        totalModels: params.totalModels,
+        modelsPresent: entity.mentions > 0 ? 1 : 0,
+        sentimentScore: sentiment.score
+      });
+
+      return {
+        brand: entity.brand,
+        mentions: entity.mentions,
+        firstPosition: entity.firstPosition,
+        contexts: entity.contexts,
+        sentiment,
+        visibilityScore,
+        scoreLabel: getScoreLabel(visibilityScore)
+      };
+    })
+  );
+
+  await saveBrandResults(params.persistedResponse.id, brandResults);
+
+  return {
+    responseId: params.persistedResponse.id,
+    modelId: params.persistedResponse.modelId,
+    modelName: params.persistedResponse.modelName,
+    brands: brandResults
+  };
 }
 
 export async function runAnalysisPipeline(
   params: PipelineParams
 ): Promise<PipelineResult> {
   const brands = [...new Set([params.brand, ...params.competitors])];
-  const totalModels = Math.max(params.modelResponses.length, 1);
+  const totalModels = Math.max(params.responses.length, 1);
 
-  const byModel = await Promise.all(
-    params.modelResponses.map(async (modelResponse): Promise<PerModelResult> => {
-      const entities = await extractEntities(
-        modelResponse.rawResponse,
-        brands,
-        params.llmQueryFn
-      );
+  await updateJobStatus(params.jobId, "RUNNING");
 
-      const sentiments = new Map<string, SentimentResult>();
-      const visibilityScores = new Map<string, number>();
-
-      const brandResults = await Promise.all(
-        entities.map(async (entity) => {
-          const sentiment = await analyseSentiment(
-            entity.brand,
-            entity.contexts,
-            params.llmQueryFn
-          );
-
-          const visibilityScore = calculateVisibilityScore({
-            mentions: entity.mentions,
-            firstPosition: entity.firstPosition,
-            totalModels,
-            modelsPresent: entity.mentions > 0 ? 1 : 0,
-            sentimentScore: sentiment.score
-          });
-
-          sentiments.set(entity.brand, sentiment);
-          visibilityScores.set(entity.brand, visibilityScore);
-
-          return {
-            brand: entity.brand,
-            mentions: entity.mentions,
-            firstPosition: entity.firstPosition,
-            contexts: entity.contexts,
-            sentiment,
-            visibilityScore,
-            scoreLabel: getScoreLabel(visibilityScore)
-          };
+  try {
+    const persistedResponses = await saveModelResponses(params.jobId, params.responses);
+    const byModel = await Promise.all(
+      persistedResponses.map((persistedResponse) =>
+        analyzeModelResponse({
+          persistedResponse,
+          brands,
+          totalModels,
+          llmQueryFn: params.llmQueryFn
         })
-      );
+      )
+    );
+    const aggregate = aggregateAcrossModels(byModel, totalModels);
+    const winner = aggregate[0]?.brand ?? params.brand;
+    const results = {
+      byModel,
+      aggregate,
+      winner
+    };
 
-      await persistBrandResults(
-        modelResponse.id,
-        entities,
-        sentiments,
-        visibilityScores
-      );
+    await updateJobStatus(params.jobId, "DONE", {
+      results
+    });
 
-      return {
-        responseId: modelResponse.id,
-        modelId: modelResponse.modelId,
-        modelName: modelResponse.modelName,
-        brands: brandResults
-      };
-    })
-  );
+    return results;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown pipeline error";
 
-  const aggregate = aggregateBrandData(byModel, brands).sort(
-    (left, right) => right.averageVisibilityScore - left.averageVisibilityScore
-  );
+    await updateJobStatus(params.jobId, "ERROR", {
+      error: message
+    });
 
-  const winner = aggregate[0]?.brand ?? params.brand;
-
-  await prisma.analysisJob.update({
-    where: {
-      id: params.jobId
-    },
-    data: {
-      results: {
-        byModel,
-        aggregate,
-        winner
-      }
-    }
-  });
-
-  return {
-    byModel,
-    aggregate,
-    winner
-  };
+    throw error;
+  }
 }

@@ -1,4 +1,8 @@
-import type { ModelResponse as PrismaModelResponse } from "@prisma/client";
+import type {
+  AnalysisJob,
+  BrandResult,
+  ModelResponse as PrismaModelResponse
+} from "@prisma/client";
 
 export type AnalysisStatus = "PENDING" | "RUNNING" | "DONE" | "ERROR";
 
@@ -40,6 +44,8 @@ export interface BrandAnalysisResult {
   scoreLabel: "dominant" | "strong" | "present" | "weak" | "absent";
 }
 
+export type BrandAnalysis = BrandAnalysisResult;
+
 export interface PerModelResult {
   responseId: string;
   modelId: string;
@@ -54,6 +60,8 @@ export interface AggregateBrandScore {
   totalMentions: number;
   modelsPresent: number;
   averageSentimentScore: number;
+  rank: number;
+  delta: number;
 }
 
 export interface PipelineResult {
@@ -66,3 +74,21 @@ export type PersistedModelResponse = Pick<
   PrismaModelResponse,
   "id" | "jobId" | "modelId" | "modelName" | "rawResponse" | "processingMs"
 >;
+
+export interface HistoryItem {
+  id: string;
+  brand: string;
+  competitors: string[];
+  createdAt: Date;
+  status: AnalysisStatus;
+  topBrandScore: number | null;
+  topBrandName: string | null;
+}
+
+export interface FullJobResult extends AnalysisJob {
+  responses: Array<
+    PrismaModelResponse & {
+      brandResults: BrandResult[];
+    }
+  >;
+}
