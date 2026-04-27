@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AnalysisJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  ERROR
+}
+
+model AnalysisJob {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now())
+  status      AnalysisJobStatus @default(PENDING)
+  brand       String
+  competitors String[]
+  prompt      String
+  results     Json?
+  insights    String?
+
+  responses   ModelResponse[]
+
+  @@index([status, createdAt])
+  @@index([brand, createdAt])
+}
+
+model ModelResponse {
+  id           String        @id @default(cuid())
+  jobId        String
+  modelId      String
+  modelName    String
+  rawResponse  String
+  processingMs Int
+
+  job          AnalysisJob   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  brandResults BrandResult[]
+
+  @@index([jobId])
+  @@index([modelId])
+}
+
+model BrandResult {
+  id             String        @id @default(cuid())
+  responseId     String
+  brandName      String
+  mentionCount   Int
+  firstPosition  Int?
+  sentimentScore Float
+  visibilityScore Float
+
+  response       ModelResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+
+  @@index([responseId])
+  @@index([brandName])
+}
