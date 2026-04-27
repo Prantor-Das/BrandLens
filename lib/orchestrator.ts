@@ -118,3 +118,5 @@ export async function orchestrateModels(
     };
   });
 }
+
+export const runOrchestrator = orchestrateModels;
