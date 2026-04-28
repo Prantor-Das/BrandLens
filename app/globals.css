@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
 
   --color-brand: oklch(55% 0.2 250);
@@ -95,12 +95,34 @@
 @keyframes fade-in-up {
   0% {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
 
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes score-fill {
+  0% {
+    transform: scaleX(0);
+  }
+
+  100% {
+    transform: scaleX(1);
   }
 }
 
@@ -170,7 +192,11 @@ button:disabled {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-in-up 300ms ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 300ms ease-out both;
 }
 
 .animate-shimmer {
@@ -182,6 +208,16 @@ button:disabled {
   );
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
+}
+
+.animate-score-fill {
+  transform-origin: left center;
+  animation: score-fill 600ms ease-out both;
+  animation-delay: calc(var(--stagger-index, 0) * 80ms);
+}
+
+.stagger-children > * {
+  animation-delay: calc(var(--stagger-index, 0) * 80ms);
 }
 
 .text-balance {

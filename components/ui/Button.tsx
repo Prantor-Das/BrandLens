@@ -1,4 +1,7 @@
+"use client";
+
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { animationClasses } from "@/lib/animations";
 import { cn } from "@/lib/cn";
 import { Spinner } from "./Spinner";
 
@@ -40,7 +43,8 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-[var(--radius-md)] font-medium whitespace-nowrap transition-all duration-[var(--transition-fast)] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] active:scale-[0.99] disabled:scale-100 disabled:opacity-50",
+        "inline-flex items-center justify-center rounded-[var(--radius-md)] font-medium whitespace-nowrap transition-all duration-[var(--transition-fast)] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] disabled:opacity-50",
+        animationClasses.interactiveButton,
         variants[variant],
         sizes[size],
         className

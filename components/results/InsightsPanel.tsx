@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
+import { getStaggerStyle } from "@/lib/animations";
 import type { ResultsInsight } from "@/lib/results";
 
 function ArrowIcon() {
@@ -45,10 +46,10 @@ export function InsightsPanel({ brand, insights }: InsightsPanelProps) {
         {insights.slice(0, 3).map((insight, index) => (
           <Card
             key={`${insight.title}-${index}`}
-            className="animate-fade-in-up"
+            className="animate-slide-in-right"
             hover
             padding="lg"
-            style={{ animationDelay: `${index * 150}ms` }}
+            style={getStaggerStyle(index)}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-3">

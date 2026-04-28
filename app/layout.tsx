@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 
@@ -8,6 +8,12 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   weight: ["400", "500", "600"]
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  weight: ["500", "700"]
 });
 
 function getMetadataBase() {
@@ -59,11 +65,11 @@ function SparkleIcon() {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html className={inter.variable} lang="en">
+    <html className={`${inter.variable} ${spaceGrotesk.variable}`} lang="en">
       <body>
         <div className="relative min-h-screen">
           <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_84%,transparent)] backdrop-blur-xl">
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 md:px-8">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between md:px-8">
               <Link className="inline-flex items-center gap-3" href="/">
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_90%,transparent)]">
                   <SparkleIcon />
@@ -73,7 +79,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 </span>
               </Link>
 
-              <nav className="flex items-center gap-5 text-sm text-[var(--foreground-muted)]">
+              <nav className="flex w-full flex-wrap items-center gap-4 text-sm text-[var(--foreground-muted)] md:w-auto md:justify-end md:gap-5">
                 <Link
                   className="transition-colors duration-[var(--transition-fast)] hover:text-[var(--foreground)]"
                   href="/#how-it-works"
@@ -95,7 +101,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           {children}
 
           <footer className="border-t border-[var(--border)]">
-            <div className="mx-auto w-full max-w-7xl px-6 py-6 text-sm text-[var(--foreground-subtle)] md:px-8">
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 text-sm text-[var(--foreground-subtle)] sm:px-6 md:px-8">
               BrandLens AI helps teams understand brand visibility across the models shaping buyer discovery.
             </div>
           </footer>

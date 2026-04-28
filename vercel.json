@@ -1,0 +1,15 @@
+{
+  "buildCommand": "pnpm prisma generate && pnpm build",
+  "installCommand": "pnpm install",
+  "env": {
+    "DATABASE_URL": "Required. PostgreSQL connection string for Prisma. Recommend Vercel Postgres or Neon.",
+    "NEXT_PUBLIC_APP_URL": "Required in production. Canonical HTTPS URL used for metadata and social images.",
+    "ENABLED_MODELS": "Optional. Comma-separated model adapters to enable, e.g. openai,gemini,claude.",
+    "OPENAI_API_KEY": "Required if openai is enabled.",
+    "OPENAI_MODEL": "Optional. Defaults to gpt-4o-mini.",
+    "GEMINI_API_KEY": "Required if gemini is enabled.",
+    "GEMINI_MODEL": "Optional. Defaults to gemini-1.5-flash.",
+    "CLAUDE_API_KEY": "Required if claude is enabled.",
+    "CLAUDE_MODEL": "Optional. Defaults to claude-3-5-haiku-20241022."
+  }
+}

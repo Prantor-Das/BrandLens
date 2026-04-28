@@ -21,7 +21,10 @@ const analysisSchema = z.object({
     .trim()
     .min(2, "Enter a brand name with at least 2 characters.")
     .max(48, "Keep the brand name under 48 characters."),
-  competitors: z.array(z.string()).max(5, "You can compare up to 5 competitors."),
+  competitors: z
+    .array(z.string())
+    .min(1, "Add at least 1 competitor to compare")
+    .max(5, "You can compare up to 5 competitors."),
   customPrompt: z
     .string()
     .max(280, "Keep the custom prompt under 280 characters.")
@@ -251,6 +254,11 @@ export function AnalysisForm() {
     }
   };
 
+  const handleDemo = () => {
+    setSubmitError("");
+    router.push("/results/demo");
+  };
+
   return (
     <Card className="relative overflow-hidden" hover padding="lg">
       <LoadingOverlay open={submitting} />
@@ -278,7 +286,7 @@ export function AnalysisForm() {
       </div>
 
       <form className="space-y-6" noValidate onSubmit={handleSubmit}>
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
           <Input
             autoFocus
             error={errors.brandName}
@@ -426,11 +434,18 @@ export function AnalysisForm() {
         </div>
 
         <div className="space-y-3">
-          <Button className="w-full" loading={submitting} size="lg" type="submit">
-            Analyse now
-          </Button>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button className="w-full" loading={submitting} size="lg" type="submit">
+              Analyse now
+            </Button>
+            <Button className="w-full" onClick={handleDemo} size="lg" type="button" variant="secondary">
+              Try demo
+            </Button>
+          </div>
           {submitError ? <p className="text-center text-sm text-[var(--color-danger)]">{submitError}</p> : null}
-          <p className="text-center text-sm text-[var(--foreground-subtle)]">Typical analysis takes 15-30 seconds</p>
+          <p className="text-center text-sm text-[var(--foreground-subtle)]">
+            Typical analysis takes 15-30 seconds. Demo mode loads instantly for presentations.
+          </p>
         </div>
       </form>
     </Card>

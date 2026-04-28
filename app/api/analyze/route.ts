@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { buildAnalysisPrompt } from "@/lib/prompts";
 import { getEnabledModels } from "@/lib/models";
@@ -11,7 +12,10 @@ export const runtime = "nodejs";
 
 const analyzeRequestSchema = z.object({
   brand: z.string().trim().min(1).max(100),
-  competitors: z.array(z.string().trim().min(1).max(100)).max(5),
+  competitors: z
+    .array(z.string().trim().min(1).max(100))
+    .min(1, "Add at least 1 competitor to compare")
+    .max(5),
   prompt: z.string().trim().max(280).optional()
 });
 
@@ -83,7 +87,7 @@ async function processAnalysisJob(jobId: string): Promise<void> {
         results: {
           ...pipelineResult,
           insights
-        }
+        } as unknown as Prisma.InputJsonValue
       }
     });
   } catch (error) {
@@ -97,7 +101,7 @@ async function processAnalysisJob(jobId: string): Promise<void> {
         status: "ERROR",
         results: {
           error: message
-        }
+        } as unknown as Prisma.InputJsonValue
       }
     });
   }

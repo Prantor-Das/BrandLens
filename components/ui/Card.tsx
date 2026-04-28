@@ -1,4 +1,7 @@
+"use client";
+
 import type { HTMLAttributes, ReactNode } from "react";
+import { animationClasses } from "@/lib/animations";
 import { cn } from "@/lib/cn";
 
 const paddingClasses = {
@@ -27,7 +30,8 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-xl)] border border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_92%,transparent)] shadow-[var(--shadow-md)] backdrop-blur-sm transition-all duration-[var(--transition-base)]",
+        "rounded-[var(--radius-xl)] border border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_92%,transparent)] shadow-[var(--shadow-md)] backdrop-blur-sm",
+        animationClasses.interactiveCard,
         hover && "hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-lg)]",
         className
       )}
@@ -39,4 +43,3 @@ export function Card({
     </div>
   );
 }
-

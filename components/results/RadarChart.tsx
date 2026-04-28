@@ -9,6 +9,7 @@ import {
   Tooltip as RechartsTooltip
 } from "recharts";
 import { Card } from "@/components/ui/Card";
+import { getStaggerStyle } from "@/lib/animations";
 import type { ResultsAggregateItem, ResultsBrandResult } from "@/lib/results";
 
 const BRAND_TONES = [
@@ -102,7 +103,7 @@ export function ResultsRadarChart({
   });
 
   return (
-    <Card className="animate-fade-in-up" padding="lg" style={{ animationDelay: "180ms" }}>
+    <Card className="animate-fade-in-up" padding="lg" style={getStaggerStyle(2)}>
       <div className="mb-5 space-y-1">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Brand footprint radar</h2>
         <p className="text-sm text-[var(--foreground-muted)]">
@@ -110,7 +111,7 @@ export function ResultsRadarChart({
         </p>
       </div>
 
-      <div className="h-[360px] w-full">
+      <div className="h-[300px] w-full sm:h-[360px]">
         <ResponsiveContainer>
           <RadarChart data={data} outerRadius="70%">
             <PolarGrid stroke="var(--border)" />

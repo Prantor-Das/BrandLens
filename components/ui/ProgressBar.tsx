@@ -1,7 +1,11 @@
+"use client";
+
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/cn";
 
 type ProgressBarProps = {
   className?: string;
+  index?: number;
   label?: string;
   value: number;
 };
@@ -18,7 +22,7 @@ function getTone(value: number) {
   return "var(--color-success)";
 }
 
-export function ProgressBar({ className, label = "Score", value }: ProgressBarProps) {
+export function ProgressBar({ className, index = 0, label = "Score", value }: ProgressBarProps) {
   const safeValue = Math.max(0, Math.min(100, Math.round(value)));
   const tone = getTone(safeValue);
 
@@ -31,14 +35,14 @@ export function ProgressBar({ className, label = "Score", value }: ProgressBarPr
       <div className="h-2 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_10%,transparent)]">
         <div
           aria-hidden="true"
-          className="h-full rounded-full transition-[width] duration-700 ease-out"
+          className="animate-score-fill h-full rounded-full"
           style={{
+            "--stagger-index": index,
             background: `linear-gradient(to right, color-mix(in oklab, ${tone} 84%, white), ${tone})`,
             width: `${safeValue}%`
-          }}
+          } as CSSProperties}
         />
       </div>
     </div>
   );
 }
-

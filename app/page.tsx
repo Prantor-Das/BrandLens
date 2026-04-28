@@ -50,12 +50,27 @@ export default function HomePage() {
             ))}
           </div>
 
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-brand)] px-4 text-sm font-medium text-white shadow-[0_10px_30px_color-mix(in_oklab,var(--color-brand)_26%,transparent)] transition-all duration-[120ms] ease-out hover:bg-[color-mix(in_oklab,var(--color-brand)_88%,black)] active:scale-[0.97]"
+              href="/results/demo"
+            >
+              Try demo
+            </Link>
+            <Link
+              className="inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] px-4 text-sm font-medium text-[var(--foreground)] transition-all duration-[120ms] ease-out hover:border-[var(--border-strong)] hover:bg-[color-mix(in_oklab,var(--foreground)_5%,transparent)] active:scale-[0.97]"
+              href="#how-it-works"
+            >
+              View sample workflow
+            </Link>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             {quickStats.map((stat) => (
               <Card key={stat.label} hover padding="sm">
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--foreground-muted)]">{stat.label}</p>
-                  <ProgressBar label={stat.label} value={stat.value} />
+                  <ProgressBar index={stat.value % 3} label={stat.label} value={stat.value} />
                 </div>
               </Card>
             ))}
@@ -123,13 +138,6 @@ export default function HomePage() {
                 Every surface is tuned for clarity: restrained color, crisp typography, responsive spacing, and motion that signals quality without becoming noisy.
               </p>
             </div>
-
-            <Link
-              className="inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] px-4 text-sm font-medium text-[var(--foreground)] transition-all duration-[var(--transition-fast)] hover:border-[var(--border-strong)] hover:bg-[color-mix(in_oklab,var(--foreground)_5%,transparent)]"
-              href="#how-it-works"
-            >
-              View sample workflow
-            </Link>
           </div>
         </Card>
       </section>

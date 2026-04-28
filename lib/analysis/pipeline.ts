@@ -168,10 +168,17 @@ export async function runAnalysisPipeline(
 ): Promise<PipelineResult> {
   const brands = [...new Set([params.brand, ...params.competitors])];
   const totalModels = Math.max(params.responses.length, 1);
+  const allModelsFailed = params.responses.every(
+    (response) => !response.response?.trim()
+  );
 
   await updateJobStatus(params.jobId, "RUNNING");
 
   try {
+    if (allModelsFailed) {
+      throw new Error("All AI models timed out. Please try again.");
+    }
+
     const persistedResponses = await saveModelResponses(params.jobId, params.responses);
     const byModel = await Promise.all(
       persistedResponses.map((persistedResponse) =>

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
+import { getStaggerStyle } from "@/lib/animations";
 import { cn } from "@/lib/cn";
 import type { ResultsAggregateItem, ResultsBrandResult, ResultsModelResponse } from "@/lib/results";
 
@@ -66,7 +67,7 @@ export function ModelBreakdown({
     <Card
       className="animate-fade-in-up overflow-hidden"
       padding="none"
-      style={{ animationDelay: "120ms" }}
+      style={getStaggerStyle(1)}
     >
       <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
         <div>
@@ -76,7 +77,7 @@ export function ModelBreakdown({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-sm">
+        <table className="min-w-[42rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_88%,transparent)] text-left">
               <th className="px-6 py-4 font-medium text-[var(--foreground-muted)]">Brand</th>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
+import { getStaggerStyle } from "@/lib/animations";
 import { cn } from "@/lib/cn";
 import type { ResultsModelResponse } from "@/lib/results";
 
@@ -95,7 +96,7 @@ export function RawResponses({ brandNames, modelResponses }: RawResponsesProps) 
   };
 
   return (
-    <Card className="animate-fade-in-up" padding="lg" style={{ animationDelay: "260ms" }}>
+    <Card className="animate-fade-in-up" padding="lg" style={getStaggerStyle(3)}>
       <div className="mb-5 space-y-1">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Raw LLM responses</h2>
         <p className="text-sm text-[var(--foreground-muted)]">
@@ -115,7 +116,7 @@ export function RawResponses({ brandNames, modelResponses }: RawResponsesProps) 
               <div className="flex items-center gap-3 px-4 py-4">
                 <button
                   aria-expanded={open}
-                  className="flex min-w-0 flex-1 items-center justify-between gap-4 text-left"
+                  className="flex min-w-0 flex-1 items-center justify-between gap-4 text-left transition-colors duration-[var(--transition-fast)] hover:text-[var(--foreground)]"
                   onClick={() => setOpenIndex((current) => (current === index ? null : index))}
                   type="button"
                 >
@@ -136,7 +137,7 @@ export function RawResponses({ brandNames, modelResponses }: RawResponsesProps) 
 
                 <button
                   aria-label={`Copy raw response from ${response.modelName}`}
-                  className="mr-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--foreground-muted)] transition-colors duration-[var(--transition-fast)] hover:text-[var(--foreground)]"
+                  className="mr-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--foreground-muted)] transition-all duration-[120ms] hover:text-[var(--foreground)] active:scale-[0.97]"
                   onClick={() => void copy(response.rawResponse, index)}
                   type="button"
                 >

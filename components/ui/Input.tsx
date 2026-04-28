@@ -1,5 +1,8 @@
+"use client";
+
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { forwardRef } from "react";
+import { animationClasses } from "@/lib/animations";
 import { cn } from "@/lib/cn";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
@@ -23,7 +26,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ) : null}
       <span
         className={cn(
-          "relative flex h-12 items-center rounded-[var(--radius-md)] border bg-[color-mix(in_oklab,var(--background-elevated)_84%,transparent)] px-3.5 transition-all duration-[var(--transition-fast)]",
+          "relative flex h-12 items-center rounded-[var(--radius-md)] border bg-[color-mix(in_oklab,var(--background-elevated)_84%,transparent)] px-3.5",
+          animationClasses.interactiveInput,
           error
             ? "border-[color-mix(in_oklab,var(--color-danger)_45%,transparent)] focus-within:border-[var(--color-danger)] focus-within:ring-2 focus-within:ring-[color-mix(in_oklab,var(--color-danger)_22%,transparent)]"
             : "border-[var(--border)] focus-within:border-[color-mix(in_oklab,var(--color-brand)_40%,transparent)] focus-within:ring-2 focus-within:ring-[color-mix(in_oklab,var(--color-brand)_18%,transparent)]"
@@ -49,4 +53,3 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     </label>
   );
 });
-
