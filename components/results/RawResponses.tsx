@@ -73,7 +73,9 @@ export function RawResponses({ brandNames, modelResponses }: RawResponsesProps) 
         <mark
           key={`${part}-${index}`}
           className="rounded px-1 py-0.5 text-[var(--foreground)]"
-          style={{ backgroundColor: "color-mix(in oklab, var(--color-warning) 42%, transparent)" }}
+          style={{
+            backgroundColor: "color-mix(in oklab, var(--color-warning) 42%, transparent)"
+          }}
         >
           {part}
         </mark>
@@ -86,7 +88,10 @@ export function RawResponses({ brandNames, modelResponses }: RawResponsesProps) 
   const copy = async (value: string, index: number) => {
     await navigator.clipboard.writeText(value);
     setCopiedIndex(index);
-    window.setTimeout(() => setCopiedIndex((current) => (current === index ? null : current)), 1500);
+    window.setTimeout(
+      () => setCopiedIndex((current) => (current === index ? null : current)),
+      1500
+    );
   };
 
   return (
@@ -116,7 +121,9 @@ export function RawResponses({ brandNames, modelResponses }: RawResponsesProps) 
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <ChevronIcon open={open} />
-                    <span className="truncate font-medium text-[var(--foreground)]">{response.modelName}</span>
+                    <span className="truncate font-medium text-[var(--foreground)]">
+                      {response.modelName}
+                    </span>
                     <span className="rounded-full border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--foreground-muted)]">
                       {(response.durationMs / 1000).toFixed(1)}s
                     </span>

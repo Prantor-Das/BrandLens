@@ -1,4 +1,4 @@
-import type { AnalysisJob } from "@prisma/client";
+import type { AnalysisJob } from "@/lib/generated/prisma/client";
 
 export function estimateProgress(job: AnalysisJob): number {
   if (job.status === "PENDING") {

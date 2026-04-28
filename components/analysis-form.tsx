@@ -57,7 +57,6 @@ function LoadingOverlay({ open }: { open: boolean }) {
 
   useEffect(() => {
     if (!open) {
-      setIndex(0);
       return;
     }
 
@@ -79,7 +78,7 @@ function LoadingOverlay({ open }: { open: boolean }) {
         <div className="space-y-2">
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-[var(--foreground-subtle)]">Running analysis</p>
           <p className="min-h-7 text-lg font-medium text-[var(--foreground)] animate-fade-in-up">
-            {ANALYSIS_STATUS_MESSAGES[index]}
+            {ANALYSIS_STATUS_MESSAGES[open ? index : 0]}
           </p>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_10%,transparent)]">
@@ -227,7 +226,11 @@ export function AnalysisForm() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          brand: payload.brandName,
+          competitors: payload.competitors,
+          prompt: payload.customPrompt || undefined
+        })
       });
 
       if (!response.ok) {

@@ -64,14 +64,17 @@ export function ResultsRadarChart({
   );
 
   const series = aggregate.map((item, index) => {
-    const matches = brandResults.filter((brandResult) => brandResult.brandName === item.brandName);
+    const matches = brandResults.filter(
+      (brandResult) => brandResult.brandName === item.brandName
+    );
     const averageSentiment =
       matches.reduce((sum, current) => sum + current.sentimentScore, 0) /
       Math.max(matches.length, 1);
-    const bestPosition = matches
-      .map((brandResult) => brandResult.firstPosition)
-      .filter((value): value is number => value !== null && value < 999)
-      .sort((left, right) => left - right)[0] ?? null;
+    const bestPosition =
+      matches
+        .map((brandResult) => brandResult.firstPosition)
+        .filter((value): value is number => value !== null && value < 999)
+        .sort((left, right) => left - right)[0] ?? null;
 
     return {
       brandName: item.brandName,
@@ -140,7 +143,10 @@ export function ResultsRadarChart({
 
       <div className="mt-5 flex flex-wrap gap-3">
         {series.map((brand) => (
-          <div key={brand.brandName} className="inline-flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+          <div
+            key={brand.brandName}
+            className="inline-flex items-center gap-2 text-sm text-[var(--foreground-muted)]"
+          >
             <span
               aria-hidden="true"
               className="h-2.5 w-2.5 rounded-full"

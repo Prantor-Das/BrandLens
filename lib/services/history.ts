@@ -66,7 +66,7 @@ export async function getRecentJobs(limit = 10): Promise<HistoryItem[]> {
 }
 
 export async function getJobById(id: string): Promise<FullJobResult | null> {
-  return prisma.analysisJob.findUnique({
+  const job = await prisma.analysisJob.findUnique({
     where: {
       id
     },
@@ -90,4 +90,6 @@ export async function getJobById(id: string): Promise<FullJobResult | null> {
       }
     }
   });
+
+  return job as FullJobResult | null;
 }

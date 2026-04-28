@@ -32,6 +32,17 @@ type ResponseRecord = {
   }>;
 };
 
+type JobWithResponses = {
+  id: string;
+  brand: string;
+  competitors: string[];
+  status: "PENDING" | "RUNNING" | "DONE" | "ERROR";
+  createdAt: Date;
+  results: unknown;
+  insights: string | null;
+  responses: ResponseRecord[];
+};
+
 function trimText(value: string, maxLength = 500): string {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength)}...`;
 }
@@ -81,7 +92,8 @@ export async function GET(
     );
   }
 
-  const responses = job.responses as ResponseRecord[];
+  const typedJob = job as unknown as JobWithResponses;
+  const responses = typedJob.responses;
 
   const enabledModels =
     responses.length > 0
@@ -92,29 +104,29 @@ export async function GET(
     return NextResponse.json({
       status: job.status,
       percentComplete: estimateProgress(job),
-      brand: job.brand,
-      competitors: job.competitors,
+      brand: typedJob.brand,
+      competitors: typedJob.competitors,
       enabledModels,
       modelResponses: [],
       brandResults: [],
       aggregate: [],
       insights: [],
-      createdAt: job.createdAt.toISOString()
+      createdAt: typedJob.createdAt.toISOString()
     });
   }
 
-  if (job.status === "ERROR") {
+  if (typedJob.status === "ERROR") {
     return NextResponse.json({
       status: "ERROR",
-      brand: job.brand,
-      competitors: job.competitors,
+      brand: typedJob.brand,
+      competitors: typedJob.competitors,
       enabledModels,
       modelResponses: [],
       brandResults: [],
       aggregate: [],
       insights: [],
-      createdAt: job.createdAt.toISOString(),
-      error: getErrorMessage(job.results)
+      createdAt: typedJob.createdAt.toISOString(),
+      error: getErrorMessage(typedJob.results)
     });
   }
 
@@ -154,9 +166,9 @@ export async function GET(
 
   let aggregate: ResultsAggregateItem[] = [];
 
-  if (job.results && typeof job.results === "object" && "aggregate" in job.results) {
+  if (typedJob.results && typeof typedJob.results === "object" && "aggregate" in typedJob.results) {
     const parsedAggregate = aggregateItemSchema.safeParse(
-      (job.results as { aggregate?: unknown }).aggregate
+      (typedJob.results as { aggregate?: unknown }).aggregate
     );
 
     if (parsedAggregate.success) {
@@ -174,13 +186,13 @@ export async function GET(
 
   return NextResponse.json({
     status: job.status,
-    brand: job.brand,
-    competitors: job.competitors,
+    brand: typedJob.brand,
+    competitors: typedJob.competitors,
     enabledModels,
     aggregate,
-    insights: parseInsights(job.insights),
+    insights: parseInsights(typedJob.insights),
     modelResponses: trimmedModelResponses,
     brandResults,
-    createdAt: job.createdAt.toISOString()
+    createdAt: typedJob.createdAt.toISOString()
   });
 }

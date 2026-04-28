@@ -1,6 +1,18 @@
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaClient } from "../lib/generated/prisma/client";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is required before running the seed script.");
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaNeon({
+    connectionString
+  })
+});
 
 async function main() {
   const existingJob = await prisma.analysisJob.findFirst({

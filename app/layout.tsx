@@ -10,7 +10,24 @@ const inter = Inter({
   weight: ["400", "500", "600"]
 });
 
+function getMetadataBase() {
+  const explicitUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (explicitUrl) {
+    return new URL(explicitUrl);
+  }
+
+  const vercelUrl = process.env.VERCEL_URL;
+
+  if (vercelUrl) {
+    return new URL(`https://${vercelUrl}`);
+  }
+
+  return new URL("http://localhost:3000");
+}
+
 export const metadata: Metadata = {
+  metadataBase: getMetadataBase(),
   title: "BrandLens AI",
   description: "Brand intelligence for the AI era. Compare how leading LLMs talk about your brand and where to improve visibility.",
   openGraph: {

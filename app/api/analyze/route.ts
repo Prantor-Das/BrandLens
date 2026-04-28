@@ -58,25 +58,11 @@ async function processAnalysisJob(jobId: string): Promise<void> {
     const { enabledModels, analysisQuery } = getCheapestModelQuery();
     const orchestratorResults = await runOrchestrator(job.prompt, enabledModels);
 
-    const persistedResponses = await Promise.all(
-      orchestratorResults.map((result) =>
-        prisma.modelResponse.create({
-          data: {
-            jobId,
-            modelId: result.modelId,
-            modelName: result.modelName,
-            rawResponse: result.response ?? `[ERROR] ${result.error ?? "Unknown model failure"}`,
-            processingMs: result.durationMs
-          }
-        })
-      )
-    );
-
     const pipelineResult = await runAnalysisPipeline({
       jobId,
       brand: job.brand,
       competitors: job.competitors,
-      modelResponses: persistedResponses,
+      responses: orchestratorResults,
       llmQueryFn: analysisQuery
     });
 

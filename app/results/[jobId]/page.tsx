@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { InsightsPanel } from "@/components/results/InsightsPanel";
@@ -311,24 +311,6 @@ export default function ResultsPage() {
     };
   }, [jobId]);
 
-  const totalDurationSeconds = useMemo(() => {
-    if (!data) {
-      return 0;
-    }
-
-    return data.modelResponses.reduce((sum, response) => sum + response.durationMs, 0) / 1000;
-  }, [data]);
-
-  const brandSummary = useMemo(() => {
-    if (!data) {
-      return null;
-    }
-
-    return (
-      data.aggregate.find((item) => item.brandName === data.brand) ?? data.aggregate[0] ?? null
-    );
-  }, [data]);
-
   if (error && !data) {
     return <ErrorView brand="" message={error} />;
   }
@@ -359,6 +341,11 @@ export default function ResultsPage() {
   if (data.status === "ERROR") {
     return <ErrorView brand={data.brand} message={data.error ?? "Analysis failed."} />;
   }
+
+  const totalDurationSeconds =
+    data.modelResponses.reduce((sum, response) => sum + response.durationMs, 0) / 1000;
+  const brandSummary =
+    data.aggregate.find((item) => item.brandName === data.brand) ?? data.aggregate[0] ?? null;
 
   const score = Math.round(brandSummary?.avgVisibilityScore ?? 0);
   const scoreLabel = getScoreLabel(score);
@@ -404,8 +391,7 @@ export default function ResultsPage() {
                     {data.brand}
                   </h1>
                   <p className="text-sm text-[var(--foreground-muted)]">
-                    Analysed {data.modelResponses.length} models {"\u00b7"}{" "}
-                    {totalDurationSeconds.toFixed(1)} seconds
+                    Analysed {data.modelResponses.length} models {"\u00b7"} {totalDurationSeconds.toFixed(1)} seconds
                   </p>
                 </div>
               </div>

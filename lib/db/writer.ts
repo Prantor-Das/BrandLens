@@ -1,4 +1,8 @@
-import { AnalysisJobStatus, Prisma, type ModelResponse } from "@prisma/client";
+import {
+  AnalysisJobStatus,
+  Prisma,
+  type ModelResponse
+} from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { OrchestratorResult } from "@/lib/orchestrator";
 import type { AnalysisStatus, BrandAnalysis } from "@/lib/types";

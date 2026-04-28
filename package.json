@@ -21,13 +21,11 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
     "@google/generative-ai": "latest",
-    "@prisma/client": "6.19.1",
+    "@prisma/adapter-neon": "latest",
+    "@prisma/client": "latest",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "next": "16.2.4",
@@ -43,9 +41,10 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "dotenv": "latest",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.1.6",
-    "prisma": "6.19.1",
+    "prisma": "latest",
     "tsx": "^4.20.6",
     "typescript": "latest"
   }

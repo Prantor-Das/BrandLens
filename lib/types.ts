@@ -2,7 +2,7 @@ import type {
   AnalysisJob,
   BrandResult,
   ModelResponse as PrismaModelResponse
-} from "@prisma/client";
+} from "@/lib/generated/prisma/client";
 
 export type AnalysisStatus = "PENDING" | "RUNNING" | "DONE" | "ERROR";
 

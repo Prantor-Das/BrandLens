@@ -61,11 +61,14 @@ type ScoreCardsProps = {
 export function ScoreCards({ aggregate, brandResults, primaryBrand }: ScoreCardsProps) {
   const summaries = useMemo(() => {
     return aggregate.map((item, index) => {
-      const matches = brandResults.filter((brandResult) => brandResult.brandName === item.brandName);
-      const firstPosition = matches
-        .map((brandResult) => brandResult.firstPosition)
-        .filter((value): value is number => value !== null && value < 999)
-        .sort((left, right) => left - right)[0] ?? null;
+      const matches = brandResults.filter(
+        (brandResult) => brandResult.brandName === item.brandName
+      );
+      const firstPosition =
+        matches
+          .map((brandResult) => brandResult.firstPosition)
+          .filter((value): value is number => value !== null && value < 999)
+          .sort((left, right) => left - right)[0] ?? null;
 
       return {
         ...item,
@@ -138,7 +141,9 @@ function ScoreCard({
           <div className="space-y-1">
             <p className="text-sm font-medium text-[var(--foreground-muted)]">{brandName}</p>
             <div className="flex items-center gap-2">
-              <span className="text-4xl font-semibold tracking-tight text-[var(--foreground)]">{score}</span>
+              <span className="text-4xl font-semibold tracking-tight text-[var(--foreground)]">
+                {score}
+              </span>
               <span className="text-sm text-[var(--foreground-subtle)]">/100</span>
             </div>
           </div>

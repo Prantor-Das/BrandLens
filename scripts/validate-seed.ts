@@ -1,7 +1,27 @@
 import { prisma } from "../lib/prisma";
 
+type SeedBrandResult = {
+  brandName: string;
+  mentionCount: number;
+  sentimentScore: number;
+  visibilityScore: number;
+};
+
+type SeedResponse = {
+  modelName: string;
+  brandResults: SeedBrandResult[];
+};
+
+type SeedJob = {
+  id: string;
+  brand: string;
+  competitors: string[];
+  createdAt: Date;
+  responses: SeedResponse[];
+};
+
 async function main(): Promise<void> {
-  const job = await prisma.analysisJob.findFirst({
+  const jobRecord = await prisma.analysisJob.findFirst({
     where: {
       brand: {
         equals: "Nike",
@@ -32,9 +52,11 @@ async function main(): Promise<void> {
     }
   });
 
-  if (!job) {
+  if (!jobRecord) {
     throw new Error('Seed validation failed: no seeded "Nike" job found.');
   }
+
+  const job = jobRecord as unknown as SeedJob;
 
   const expectedBrands = [job.brand, ...job.competitors];
   const missingResponses = job.responses.filter(

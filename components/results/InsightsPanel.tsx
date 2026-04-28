@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import type { ResultsInsight } from "@/lib/results";
 
@@ -23,18 +22,6 @@ function ArrowIcon() {
       />
     </svg>
   );
-}
-
-function getPriorityVariant(priority: ResultsInsight["priority"]) {
-  if (priority === "high") {
-    return "danger";
-  }
-
-  if (priority === "medium") {
-    return "warning";
-  }
-
-  return "outline";
 }
 
 type InsightsPanelProps = {
@@ -65,9 +52,6 @@ export function InsightsPanel({ brand, insights }: InsightsPanelProps) {
           >
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-3">
-                <Badge size="sm" variant={getPriorityVariant(insight.priority)}>
-                  {insight.priority} priority
-                </Badge>
                 <div className="space-y-1.5">
                   <h3 className="text-base font-semibold text-[var(--foreground)]">{insight.title}</h3>
                   <p className="text-sm leading-6 text-[var(--foreground-muted)]">{insight.description}</p>

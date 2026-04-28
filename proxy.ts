@@ -37,7 +37,7 @@ function getRateLimitState(ip: string): RateLimitEntry {
   return current;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const ip = getClientIp(request);
   const state = getRateLimitState(ip);
   const remaining = Math.max(0, MAX_REQUESTS - state.count - 1);
