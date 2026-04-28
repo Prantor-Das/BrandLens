@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: ResultsPageProps): Promise<Me
 
   if (!payload) {
     return {
-      title: "Report not found — BrandLens AI"
+      title: "Report not found - BrandLens AI"
     };
   }
 

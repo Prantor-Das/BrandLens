@@ -129,7 +129,7 @@ export async function getResultsPayload(jobId: string): Promise<ResultsApiPayloa
 
 export function buildResultsMetadata(payload: ResultsApiPayload, jobId: string): Metadata {
   const brandTitle = [payload.brand, ...payload.competitors.slice(0, 1)].join(" vs ");
-  const title = `${brandTitle} — BrandLens AI Report`;
+  const title = `${brandTitle} - BrandLens AI Report`;
   const description = `See how ${payload.brand} performed against ${payload.competitors.join(", ")} across AI assistants.`;
 
   return {

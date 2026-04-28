@@ -59,7 +59,7 @@ export default async function OpenGraphImage({ params }: OgImageProps) {
                 background: "rgba(255,255,255,0.06)"
               }}
             >
-              <span style={{ fontSize: 26, color: "#77c6ff" }}>✦</span>
+              <span style={{ fontSize: 26, color: "#77c6ff" }}>*</span>
             </div>
             <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
               BrandLens
