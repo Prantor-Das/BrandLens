@@ -70,6 +70,7 @@ export interface PipelineResult {
   byModel: PerModelResult[];
   aggregate: AggregateBrandScore[];
   winner: string;
+  brandDescription: string;
 }
 
 export type PersistedModelResponse = Pick<

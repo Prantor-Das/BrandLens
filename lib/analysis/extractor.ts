@@ -80,7 +80,8 @@ function normalizeBrandMap(
 
 function fallbackExtract(response: string, brands: string[]): EntityResult[] {
   return brands.map((brand) => {
-    const regex = new RegExp(escapeRegExp(brand), "gi");
+    const escapedBrand = escapeRegExp(brand);
+    const regex = new RegExp(`\\b${escapedBrand}\\b`, "gi");
     const matches = Array.from(response.matchAll(regex));
     const mentions = matches.length;
     const firstIndex = matches[0]?.index;

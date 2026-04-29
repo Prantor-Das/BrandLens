@@ -65,7 +65,7 @@ function SparkleIcon() {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html className={`${inter.variable} ${spaceGrotesk.variable}`} lang="en">
+    <html className={`${inter.variable} ${spaceGrotesk.variable}`} data-scroll-behavior="smooth" lang="en">
       <body>
         <div className="relative min-h-screen">
           <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_84%,transparent)] backdrop-blur-xl">
@@ -88,7 +88,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 </Link>
                 <a
                   className="transition-colors duration-[var(--transition-fast)] hover:text-[var(--foreground)]"
-                  href="https://github.com"
+                  href="https://github.com/Prantor-Das/BrandLens"
                   rel="noreferrer"
                   target="_blank"
                 >

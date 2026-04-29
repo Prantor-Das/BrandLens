@@ -5,6 +5,8 @@ import { analyseSentiment } from "@/lib/analysis/sentiment";
 import { saveBrandResults, saveModelResponses, updateJobStatus } from "@/lib/db/writer";
 import { ExtractionError, safeRun, wrapWithTimeout } from "@/lib/errors";
 import type { OrchestratorResult } from "@/lib/orchestrator";
+import { buildBrandDescriptionPrompt } from "@/lib/prompts";
+import { buildBrandDescriptionFallback } from "@/lib/results";
 import type {
   BrandAnalysis,
   EntityResult,
@@ -192,10 +194,32 @@ export async function runAnalysisPipeline(
     );
     const aggregate = aggregateAcrossModels(byModel, totalModels);
     const winner = aggregate[0]?.brand ?? params.brand;
+    let brandDescription = "";
+
+    try {
+      const descPrompt = buildBrandDescriptionPrompt(params.brand);
+      brandDescription = await wrapWithTimeout(
+        params.llmQueryFn(descPrompt),
+        15_000,
+        "brand-description"
+      );
+      brandDescription = brandDescription.trim();
+    } catch {
+      brandDescription = "";
+    }
+
+    if (!brandDescription) {
+      brandDescription = buildBrandDescriptionFallback(
+        params.brand,
+        params.responses.map((response) => response.response ?? "")
+      );
+    }
+
     const results = {
       byModel,
       aggregate,
-      winner
+      winner,
+      brandDescription
     };
 
     await updateJobStatus(params.jobId, "DONE", {

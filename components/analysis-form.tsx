@@ -23,7 +23,7 @@ const analysisSchema = z.object({
     .max(100, "Keep the brand name under 100 characters."),
   competitors: z
     .array(z.string())
-    .min(1, "Add at least 1 competitor to compare")
+    .min(0)
     .max(5, "You can compare up to 5 competitors."),
   customPrompt: z
     .string()
@@ -61,6 +61,20 @@ function SparklineIcon() {
         strokeWidth="1.5"
       />
       <path d="M10.5 4.5H13V7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M3.5 8.25L6.5 11.25L12.5 4.75"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+      />
     </svg>
   );
 }
@@ -327,7 +341,11 @@ export function AnalysisForm() {
   };
 
   return (
-    <Card className="relative overflow-hidden" hover padding="lg">
+    <Card
+      className="relative overflow-hidden border-[color-mix(in_oklab,var(--border-strong)_78%,transparent)] bg-[linear-gradient(145deg,color-mix(in_oklab,var(--background-elevated)_96%,white_4%),color-mix(in_oklab,var(--background)_86%,var(--color-brand)_6%))]"
+      hover
+      padding="lg"
+    >
       <LoadingOverlay open={submitting} />
 
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -353,7 +371,7 @@ export function AnalysisForm() {
       </div>
 
       <form className="space-y-6" noValidate onSubmit={handleSubmit}>
-        <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
           <Input
             autoFocus
             error={errors.brandName}
@@ -378,7 +396,7 @@ export function AnalysisForm() {
                 </button>
               </Tooltip>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-2">
               {availableModels.map((model) => {
                 const active = models.includes(model.id);
                 const providerBadge = getProviderBadge(model);
@@ -388,28 +406,42 @@ export function AnalysisForm() {
                     key={model.id}
                     aria-pressed={active}
                     className={cn(
-                      "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-[var(--transition-fast)]",
+                      "group grid min-h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[var(--radius-md)] border px-3 text-left text-sm font-medium transition-all duration-[var(--transition-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
                       active
-                        ? "border-[color-mix(in_oklab,var(--color-brand)_44%,transparent)] bg-[color-mix(in_oklab,var(--color-brand)_18%,transparent)] text-[var(--foreground)]"
-                        : "border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_76%,transparent)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
+                        ? "border-[color-mix(in_oklab,var(--color-brand)_54%,transparent)] bg-[color-mix(in_oklab,var(--color-brand)_16%,transparent)] text-[var(--foreground)] shadow-[0_12px_34px_color-mix(in_oklab,var(--color-brand)_14%,transparent)]"
+                        : "border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_74%,transparent)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:bg-[color-mix(in_oklab,var(--foreground)_5%,transparent)] hover:text-[var(--foreground)]"
                     )}
                     onClick={() => toggleModel(model.id)}
                     type="button"
                   >
                     <span
                       className={cn(
-                        "inline-flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 text-[10px] font-semibold",
+                        "inline-flex h-6 min-w-6 items-center justify-center rounded-full border px-1.5 text-[10px] font-semibold",
                         providerBadge.className
                       )}
                     >
                       {providerBadge.label}
                     </span>
-                    <span>{model.name}</span>
-                    {model.isFree ? (
-                      <span className="rounded-full border border-[color-mix(in_oklab,var(--color-success)_28%,transparent)] bg-[color-mix(in_oklab,var(--color-success)_12%,transparent)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-success)]">
-                        Free
+                    <span className="min-w-0 leading-5">
+                      <span className="block truncate">{model.name}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      {model.isFree ? (
+                        <span className="rounded-full border border-[color-mix(in_oklab,var(--color-success)_28%,transparent)] bg-[color-mix(in_oklab,var(--color-success)_12%,transparent)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-success)]">
+                          Free
+                        </span>
+                      ) : null}
+                      <span
+                        className={cn(
+                          "inline-flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-[var(--transition-fast)]",
+                          active
+                            ? "border-[color-mix(in_oklab,var(--color-brand)_50%,transparent)] bg-[var(--color-brand)] text-white"
+                            : "border-[var(--border)] text-transparent group-hover:border-[var(--border-strong)]"
+                        )}
+                      >
+                        <CheckIcon />
                       </span>
-                    ) : null}
+                    </span>
                   </button>
                 );
               })}
@@ -469,7 +501,9 @@ export function AnalysisForm() {
           {errors.competitors || errors.competitorDraft ? (
             <p className="text-sm text-[var(--color-danger)]">{errors.competitors ?? errors.competitorDraft}</p>
           ) : (
-            <p className="text-sm text-[var(--foreground-subtle)]">Press Enter or comma to add each competitor.</p>
+            <p className="text-sm text-[var(--foreground-subtle)]">
+              Optional - press Enter or comma to add a competitor. Leave empty to analyse your brand alone.
+            </p>
           )}
         </div>
 

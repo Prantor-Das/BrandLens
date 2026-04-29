@@ -1,4 +1,5 @@
 import type { AggregateBrandScore, PerModelResult, SentimentResult } from "@/lib/types";
+import { calculateVisibilityScore } from "@/lib/analysis/scorer";
 
 const SENTIMENT_PRIORITY: SentimentResult["sentiment"][] = [
   "positive",
@@ -59,32 +60,32 @@ export function aggregateAcrossModels(
   const grouped = new Map<
     string,
     {
-      totalVisibilityScore: number;
       totalSentimentScore: number;
       sentiments: SentimentResult["sentiment"][];
       totalMentions: number;
       modelsPresent: number;
       appearances: number;
+      bestPosition: number;
     }
   >();
 
   for (const modelResult of perModelResults) {
     for (const brandResult of modelResult.brands) {
       const current = grouped.get(brandResult.brand) ?? {
-        totalVisibilityScore: 0,
         totalSentimentScore: 0,
         sentiments: [],
         totalMentions: 0,
         modelsPresent: 0,
-        appearances: 0
+        appearances: 0,
+        bestPosition: 999
       };
 
-      current.totalVisibilityScore += brandResult.visibilityScore;
       current.totalSentimentScore += brandResult.sentiment.score;
       current.sentiments.push(brandResult.sentiment.sentiment);
       current.totalMentions += brandResult.mentions;
       current.modelsPresent += brandResult.mentions > 0 ? 1 : 0;
       current.appearances += 1;
+      current.bestPosition = Math.min(current.bestPosition, brandResult.firstPosition);
 
       grouped.set(brandResult.brand, current);
     }
@@ -92,16 +93,20 @@ export function aggregateAcrossModels(
 
   const aggregate = Array.from(grouped.entries()).map(([brand, data]) => {
     const divisor = totalModels > 0 ? totalModels : Math.max(data.appearances, 1);
-    const averageVisibilityScore = roundToTwoDecimals(
-      data.totalVisibilityScore / divisor
-    );
     const averageSentimentScore = roundToTwoDecimals(
       data.totalSentimentScore / Math.max(data.appearances, 1)
     );
+    const aggregateVisibilityScore = calculateVisibilityScore({
+      mentions: data.totalMentions,
+      firstPosition: data.bestPosition,
+      totalModels: divisor,
+      modelsPresent: data.modelsPresent,
+      sentimentScore: averageSentimentScore
+    });
 
     return {
       brand,
-      averageVisibilityScore,
+      averageVisibilityScore: aggregateVisibilityScore,
       dominantSentiment: getDominantSentiment(
         data.sentiments,
         averageSentimentScore

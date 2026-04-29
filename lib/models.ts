@@ -1,21 +1,45 @@
 import { GoogleGenAI } from "@google/genai";
-import OpenAI from "openai";
 import { env } from "@/lib/env";
 import type { ModelAdapter } from "@/lib/types";
+
+type OpenRouterChoice = {
+  message?: {
+    content?: string | null;
+    reasoning?: string | null;
+    reasoning_content?: string | null;
+  } | null;
+};
+
+type OpenRouterResponse = {
+  choices?: OpenRouterChoice[];
+  error?: {
+    message?: string;
+  };
+};
+
+function stripThinkingBlocks(value: string): string {
+  return value.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+}
+
+function getOpenRouterText(data: OpenRouterResponse): string {
+  const message = data.choices?.[0]?.message;
+  const content = stripThinkingBlocks(message?.content?.trim() ?? "");
+
+  return (
+    content ||
+    message?.reasoning_content?.trim() ||
+    message?.reasoning?.trim() ||
+    ""
+  );
+}
 
 function makeOpenRouterAdapter(
   modelId: string,
   displayName: string,
   isFree = false
 ): ModelAdapter {
-  const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: env.OPENROUTER_API_KEY,
-    defaultHeaders: {
-      "HTTP-Referer": env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-      "X-Title": "BrandLens AI"
-    }
-  });
+  const apiKey = env.OPENROUTER_API_KEY ?? "";
+  const referer = env.NEXT_PUBLIC_APP_URL ?? "https://brandlens.ai";
 
   return {
     id: modelId,
@@ -23,13 +47,34 @@ function makeOpenRouterAdapter(
     isFree,
     provider: "openrouter",
     query: async (prompt: string) => {
-      const res = await client.chat.completions.create({
-        model: modelId,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1000
+      const maxTokens = modelId.toLowerCase().includes("deepseek") ? 2048 : 1024;
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": referer,
+          "X-Title": "BrandLens AI"
+        },
+        body: JSON.stringify({
+          model: modelId,
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: maxTokens
+        })
       });
+      const data = (await response.json()) as OpenRouterResponse;
 
-      return res.choices[0]?.message.content ?? "";
+      if (!response.ok) {
+        throw new Error(data.error?.message ?? `OpenRouter request failed with status ${response.status}`);
+      }
+
+      const text = getOpenRouterText(data);
+
+      if (!text) {
+        throw new Error(`OpenRouter returned an empty response for ${modelId}`);
+      }
+
+      return text;
     }
   };
 }

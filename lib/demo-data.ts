@@ -33,6 +33,8 @@ export const demoJobResult: FullJobResult = {
     }
   ]),
   results: {
+    brandDescription:
+      "A global athletic footwear, apparel, and equipment company, Nike serves consumers across sport, fitness, and lifestyle markets. Its best-known products include performance shoes, sportswear, and signature athlete lines, with differentiation built around product innovation, athlete endorsements, and large-scale brand recognition.",
     aggregate: [
       {
         brand: "Adidas",
@@ -185,6 +187,8 @@ export const demoJobResult: FullJobResult = {
 export const demoResultsPayload: ResultsApiPayload = {
   status: "DONE",
   brand: demoJobResult.brand,
+  brandDescription:
+    "A global athletic footwear, apparel, and equipment company, Nike serves consumers across sport, fitness, and lifestyle markets. Its best-known products include performance shoes, sportswear, and signature athlete lines, with differentiation built around product innovation, athlete endorsements, and large-scale brand recognition.",
   competitors: demoJobResult.competitors,
   enabledModels: demoJobResult.responses.map((response) => response.modelId),
   modelResponses: demoJobResult.responses.map((response) => ({

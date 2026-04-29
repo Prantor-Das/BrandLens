@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getEnabledModels } from "@/lib/models";
 import type { AggregateBrandScore } from "@/lib/types";
+import { buildFallbackInsights } from "@/lib/results";
 
 const insightSchema = z.array(
   z.object({
@@ -10,28 +11,19 @@ const insightSchema = z.array(
   })
 );
 
-const fallbackInsights = [
-  {
-    title: "Tighten comparison messaging",
-    description:
-      "Publish clearer pages that compare your brand against named competitors on core buying criteria.",
-    priority: "high"
-  },
-  {
-    title: "Expand authoritative content",
-    description:
-      "Create expert guides, FAQs, and review-driven content that LLMs can cite more confidently.",
-    priority: "medium"
-  },
-  {
-    title: "Reinforce consistent brand signals",
-    description:
-      "Align product naming, value props, and social proof across your site and major third-party profiles.",
-    priority: "medium"
-  }
-] as const;
-
 const modelPreference = ["claude", "gemini", "openai"] as const;
+
+function toResultsAggregateItems(aggregate: AggregateBrandScore[]) {
+  return aggregate.map((item) => ({
+    brandName: item.brand,
+    avgVisibilityScore: item.averageVisibilityScore,
+    dominantSentiment: item.dominantSentiment,
+    totalMentions: item.totalMentions,
+    modelsPresent: item.modelsPresent,
+    rank: item.rank,
+    delta: item.delta
+  }));
+}
 
 function buildInsightGenerationPrompt(params: {
   brand: string;
@@ -86,6 +78,10 @@ export async function generateInsights(params: {
   enabledModels: string[];
 }): Promise<string> {
   const model = getPreferredInsightModel(params.enabledModels);
+  const fallbackInsights = buildFallbackInsights(
+    params.brand,
+    toResultsAggregateItems(params.aggregate)
+  );
 
   if (!model) {
     return JSON.stringify(fallbackInsights, null, 2);

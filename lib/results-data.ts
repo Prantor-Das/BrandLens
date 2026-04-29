@@ -3,6 +3,9 @@ import { demoResultsPayload } from "@/lib/demo-data";
 import { getJobById } from "@/lib/services/history";
 import {
   parseInsights,
+  buildBrandDescriptionFallback,
+  buildFallbackInsights,
+  rescoreAggregateItems,
   inferSentiment,
   type ResultsApiPayload,
   type ResultSentiment,
@@ -113,14 +116,39 @@ export async function getResultsPayload(jobId: string): Promise<ResultsApiPayloa
           }
         ))
       : [];
+  const storedBrandDescription =
+    job.results && typeof job.results === "object" && "brandDescription" in job.results
+      ? String((job.results as { brandDescription?: unknown }).brandDescription ?? "")
+      : "";
+
+  const rescoredAggregate = rescoreAggregateItems(
+    aggregate,
+    brandResults,
+    Math.max(enabledModels.length, 1)
+  );
+  const brandDescription =
+    storedBrandDescription.trim() ||
+    buildBrandDescriptionFallback(
+      job.brand,
+      job.responses.map((response) => response.rawResponse)
+    );
+  const storedInsights =
+    job.insights ||
+    (job.results && typeof job.results === "object" && "insights" in job.results
+      ? String((job.results as { insights?: unknown }).insights ?? "")
+      : "");
 
   return {
     status: "DONE",
     brand: job.brand,
+    brandDescription,
     competitors: job.competitors,
     enabledModels,
-    aggregate,
-    insights: parseInsights(job.insights),
+    aggregate: rescoredAggregate,
+    insights: parseInsights(
+      storedInsights,
+      buildFallbackInsights(job.brand, rescoredAggregate)
+    ),
     modelResponses,
     brandResults,
     createdAt: job.createdAt.toISOString()

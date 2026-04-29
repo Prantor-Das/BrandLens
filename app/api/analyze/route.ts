@@ -14,7 +14,7 @@ const analyzeRequestSchema = z.object({
   brand: z.string().trim().min(1).max(100),
   competitors: z
     .array(z.string().trim().min(1).max(100))
-    .min(1, "Add at least 1 competitor to compare")
+    .min(0)
     .max(5),
   prompt: z.string().trim().max(280).optional(),
   selectedModelIds: z.array(z.string().trim().min(1)).min(1).optional()

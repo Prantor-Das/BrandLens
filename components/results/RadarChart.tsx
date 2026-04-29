@@ -111,8 +111,8 @@ export function ResultsRadarChart({
         </p>
       </div>
 
-      <div className="h-[300px] w-full sm:h-[360px]">
-        <ResponsiveContainer>
+      <div className="h-[300px] min-h-[300px] w-full min-w-0 sm:h-[360px] sm:min-h-[360px]">
+        <ResponsiveContainer height="100%" minHeight={300} minWidth={0} width="100%">
           <RadarChart data={data} outerRadius="70%">
             <PolarGrid stroke="var(--border)" />
             <PolarAngleAxis

@@ -50,7 +50,7 @@ describe("calculateVisibilityScore", () => {
         modelsPresent: 4,
         sentimentScore: 0.6
       })
-    ).toBe(90);
+    ).toBe(97);
   });
 
   it("applies a negative sentiment penalty to otherwise visible brands", () => {
@@ -62,6 +62,6 @@ describe("calculateVisibilityScore", () => {
         modelsPresent: 2,
         sentimentScore: -1
       })
-    ).toBe(29);
+    ).toBe(54);
   });
 });

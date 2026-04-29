@@ -350,6 +350,13 @@ export function ResultsDashboard({ initialData, jobId }: ResultsDashboardProps) 
                   <h1 className="text-balance text-4xl font-semibold tracking-tight text-[var(--foreground)]">
                     {data.brand}
                   </h1>
+                  {data.brandDescription ? (
+                    <div className="mt-3 max-w-3xl border-l-2 border-[color-mix(in_oklab,var(--color-brand)_48%,transparent)] pl-4">
+                      <p className="text-sm leading-7 text-[var(--foreground-muted)]">
+                        {data.brandDescription}
+                      </p>
+                    </div>
+                  ) : null}
                   <p className="text-sm leading-6 text-[var(--foreground-muted)]">
                     Analysed {data.modelResponses.length} models{freeModelCount > 0 ? ` (${freeModelCount} free)` : ""} {"\u00b7"} {totalDurationSeconds.toFixed(1)} seconds {"\u00b7"} Top competitor: {topCompetitor}
                   </p>

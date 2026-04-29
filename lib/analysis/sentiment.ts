@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { buildSentimentPrompt } from "@/lib/prompts";
 import type { SentimentResult } from "@/lib/types";
 
 const sentimentSchema = z.object({
@@ -14,22 +15,6 @@ const fallbackSentiment: SentimentResult = {
   confidence: 0,
   reason: "Could not analyse"
 };
-
-function buildSentimentClassificationPrompt(
-  brandName: string,
-  contexts: string[]
-): string {
-  return [
-    `Analyse sentiment for the brand "${brandName}".`,
-    'Return ONLY JSON with this exact shape: {"sentiment":"positive"|"neutral"|"negative","score":number,"confidence":number,"reason":string}.',
-    'Use "score" from -1 to 1, where -1 is very negative and 1 is very positive.',
-    'Use "confidence" from 0 to 1.',
-    "Base the judgement only on the provided contexts.",
-    "",
-    "Contexts:",
-    ...(contexts.length > 0 ? contexts : ["No contexts provided."])
-  ].join("\n");
-}
 
 function extractJsonObject(input: string): string {
   const trimmed = input.trim();
@@ -58,8 +43,13 @@ export async function analyseSentiment(
   }
 
   try {
+    const brandContext = [
+      `Brand: ${brandName}`,
+      "Contexts:",
+      ...(contexts.length > 0 ? contexts : ["No contexts provided."])
+    ].join("\n");
     const raw = await llmQueryFn(
-      buildSentimentClassificationPrompt(brandName, contexts)
+      buildSentimentPrompt(brandContext)
     );
 
     return sentimentSchema.parse(JSON.parse(extractJsonObject(raw)));

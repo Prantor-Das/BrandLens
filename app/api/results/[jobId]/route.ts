@@ -5,8 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { estimateProgress } from "@/lib/poll";
 import {
   aggregateItemSchema,
+  buildBrandDescriptionFallback,
+  buildFallbackInsights,
   inferSentiment,
   parseInsights,
+  rescoreAggregateItems,
   type ResultsAggregateItem,
   type ResultsBrandResult
 } from "@/lib/results";
@@ -186,14 +189,40 @@ export async function GET(
       }));
     }
   }
+  const storedBrandDescription =
+    typedJob.results && typeof typedJob.results === "object" && "brandDescription" in typedJob.results
+      ? String((typedJob.results as { brandDescription?: unknown }).brandDescription ?? "")
+      : "";
+
+  const rescoredAggregate = rescoreAggregateItems(
+    aggregate,
+    brandResults,
+    Math.max(enabledModels.length, 1)
+  );
+  const brandDescription =
+    storedBrandDescription.trim() ||
+    buildBrandDescriptionFallback(
+      typedJob.brand,
+      responses.map((response) => response.rawResponse)
+    );
+  const storedInsights =
+    typedJob.insights ||
+    (typedJob.results && typeof typedJob.results === "object" && "insights" in typedJob.results
+      ? String((typedJob.results as { insights?: unknown }).insights ?? "")
+      : "");
+  const insights = parseInsights(
+    storedInsights,
+    buildFallbackInsights(typedJob.brand, rescoredAggregate)
+  );
 
   return NextResponse.json({
     status: job.status,
     brand: typedJob.brand,
+    brandDescription,
     competitors: typedJob.competitors,
     enabledModels,
-    aggregate,
-    insights: parseInsights(typedJob.insights),
+    aggregate: rescoredAggregate,
+    insights,
     modelResponses: trimmedModelResponses,
     brandResults,
     createdAt: typedJob.createdAt.toISOString()
