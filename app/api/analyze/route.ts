@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +9,7 @@ import { runAnalysisPipeline } from "@/lib/analysis/pipeline";
 import { generateInsights } from "@/lib/insights";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const analyzeRequestSchema = z.object({
   brand: z.string().trim().min(1).max(100),
@@ -140,9 +141,9 @@ export async function POST(request: Request) {
       }
     });
 
-    void (async () => {
+    after(async () => {
       await processAnalysisJob(job.id);
-    })();
+    });
 
     return NextResponse.json(
       {

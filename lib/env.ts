@@ -5,7 +5,7 @@ function normalizeEnvValue(value: unknown) {
     return value;
   }
 
-  const trimmed = value.trim();
+  let trimmed = value.trim();
 
   if (
     !trimmed ||
@@ -15,6 +15,14 @@ function normalizeEnvValue(value: unknown) {
     return undefined;
   }
 
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+    (trimmed.startsWith("`") && trimmed.endsWith("`"))
+  ) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+
   return trimmed;
 }
 
@@ -22,11 +30,42 @@ function envValue<T extends z.ZodTypeAny>(schema: T) {
   return z.preprocess(normalizeEnvValue, schema);
 }
 
+function firstEnvValue(...values: unknown[]) {
+  for (const value of values) {
+    const normalized = normalizeEnvValue(value);
+
+    if (typeof normalized === "string") {
+      return normalized;
+    }
+  }
+
+  return undefined;
+}
+
 const optionalString = envValue(z.string().optional());
+const databaseUrl = envValue(
+  z
+    .string()
+    .min(1, "DATABASE_URL is required")
+    .refine(
+      (value) => {
+        try {
+          const url = new URL(value);
+          return url.protocol === "postgres:" || url.protocol === "postgresql:";
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          "DATABASE_URL must be a valid postgres:// or postgresql:// connection URL."
+      }
+    )
+);
 
 const envSchema = z
   .object({
-    DATABASE_URL: envValue(z.string().min(1, "DATABASE_URL is required")),
+    DATABASE_URL: databaseUrl,
     OPENROUTER_API_KEY: optionalString,
     GEMINI_API_KEY: optionalString,
     ENABLED_MODELS: envValue(
@@ -48,7 +87,11 @@ const envSchema = z
   });
 
 export const env = envSchema.parse({
-  DATABASE_URL: process.env.DATABASE_URL,
+  DATABASE_URL: firstEnvValue(
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.POSTGRES_URL
+  ),
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   ENABLED_MODELS: process.env.ENABLED_MODELS,

@@ -1,11 +1,8 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@/lib/generated/prisma/client";
+import { env } from "@/lib/env";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required to initialize Prisma.");
-}
+const connectionString = env.DATABASE_URL;
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClient;
