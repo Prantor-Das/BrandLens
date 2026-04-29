@@ -1,18 +1,37 @@
 import { z } from "zod";
 
-const optionalString = z.preprocess(
-  (value) => (value === "" ? undefined : value),
-  z.string().optional()
-);
+function normalizeEnvValue(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+
+  if (
+    !trimmed ||
+    trimmed.startsWith("Optional.") ||
+    trimmed.startsWith("Required.")
+  ) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
+function envValue<T extends z.ZodTypeAny>(schema: T) {
+  return z.preprocess(normalizeEnvValue, schema);
+}
+
+const optionalString = envValue(z.string().optional());
 
 const envSchema = z
   .object({
-    DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+    DATABASE_URL: envValue(z.string().min(1, "DATABASE_URL is required")),
     OPENROUTER_API_KEY: optionalString,
     GEMINI_API_KEY: optionalString,
-    ENABLED_MODELS: z
-      .string()
-      .default("openrouter-gpt,openrouter-claude,openrouter-deepseek,gemini"),
+    ENABLED_MODELS: envValue(
+      z.string().default("openrouter-gpt,openrouter-claude,gemini")
+    ),
     MODEL_OPENROUTER_GPT_ID: optionalString,
     MODEL_OPENROUTER_GPT_NAME: optionalString,
     MODEL_OPENROUTER_CLAUDE_ID: optionalString,

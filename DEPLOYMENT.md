@@ -26,6 +26,9 @@
    - Via Vercel CLI with the project environment loaded
 6. Trigger the first deploy.
 
+Do not add placeholder/help text as environment variable values. Leave optional
+model override variables unset unless you are replacing the defaults.
+
 ## Recommended Env Values
 
 - `NEXT_PUBLIC_APP_URL`: your production URL, for example `https://brandlens-ai.vercel.app`
@@ -40,3 +43,4 @@
 - The build command already runs `pnpm prisma generate && pnpm build`.
 - Demo mode works without live model keys, but real analysis requires at least one provider API key.
 - If deployment succeeds but analysis fails, verify the database connection and the enabled API keys first.
+- `vercel.json` should not contain API keys or documentation strings under an `env` block; configure production values in the Vercel dashboard instead.
