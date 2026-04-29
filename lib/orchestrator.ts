@@ -1,4 +1,5 @@
 import type { ModelAdapter } from "@/lib/types";
+import { wrapWithTimeout } from "@/lib/errors";
 
 export interface OrchestratorResult {
   modelId: string;
@@ -10,6 +11,7 @@ export interface OrchestratorResult {
 
 const RETRY_DELAY_MS = 1000;
 const MAX_ATTEMPTS = 2;
+const MODEL_TIMEOUT_MS = 30_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,7 +51,11 @@ async function queryWithRetry(
     attempts += 1;
 
     try {
-      const response = await model.query(prompt);
+      const response = await wrapWithTimeout(
+        model.query(prompt),
+        MODEL_TIMEOUT_MS,
+        `${model.id} query`
+      );
       const durationMs = Date.now() - startedAt;
 
       console.info(`[orchestrator] ${model.id} completed in ${durationMs}ms`);

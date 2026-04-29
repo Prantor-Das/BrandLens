@@ -7,7 +7,7 @@ BrandLens AI benchmarks how leading AI assistants talk about your brand versus c
 ## Features
 
 - Instant `Try demo` mode for judge-friendly walkthroughs
-- Parallel AI brand analysis across OpenAI, Gemini, and Claude
+- Parallel AI brand analysis across OpenRouter and Google AI Studio models
 - Score cards, radar charts, raw responses, and per-model breakdowns
 - Actionable insights that translate AI visibility into positioning fixes
 - Responsive landing and results experiences for desktop and mobile
@@ -17,7 +17,7 @@ BrandLens AI benchmarks how leading AI assistants talk about your brand versus c
 
 1. Install dependencies with `pnpm install`.
 2. Copy `.env.example` to `.env`.
-3. Fill in `DATABASE_URL` and any model API keys you want to enable.
+3. Fill in `DATABASE_URL` and at least one model API key.
 4. Run `pnpm prisma:generate` and `pnpm prisma:push`.
 5. Start the app with `pnpm dev`.
 
@@ -27,13 +27,25 @@ BrandLens AI benchmarks how leading AI assistants talk about your brand versus c
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | PostgreSQL connection string for Prisma |
 | `NEXT_PUBLIC_APP_URL` | Recommended | Canonical app URL for metadata and OG images |
-| `ENABLED_MODELS` | No | Comma-separated adapters to enable |
-| `OPENAI_API_KEY` | If using OpenAI | API key for the OpenAI adapter |
-| `OPENAI_MODEL` | No | OpenAI model name |
-| `GEMINI_API_KEY` | If using Gemini | API key for the Gemini adapter |
-| `GEMINI_MODEL` | No | Gemini model name |
-| `CLAUDE_API_KEY` | If using Claude | API key for the Claude adapter |
-| `CLAUDE_MODEL` | No | Claude model name |
+| `OPENROUTER_API_KEY` | If using OpenRouter | API key for GPT, Claude, DeepSeek, and other OpenRouter models |
+| `GEMINI_API_KEY` | If using Gemini | API key for direct Google AI Studio Gemini calls |
+| `ENABLED_MODELS` | No | Comma-separated model registry keys to enable |
+| `MODEL_OPENROUTER_GPT_ID` | No | OpenRouter GPT model ID |
+| `MODEL_OPENROUTER_GPT_NAME` | No | Display name for the GPT model |
+| `MODEL_OPENROUTER_CLAUDE_ID` | No | OpenRouter Claude model ID |
+| `MODEL_OPENROUTER_CLAUDE_NAME` | No | Display name for the Claude model |
+| `MODEL_OPENROUTER_DEEPSEEK_ID` | No | OpenRouter DeepSeek model ID |
+| `MODEL_OPENROUTER_DEEPSEEK_NAME` | No | Display name for the DeepSeek model |
+| `MODEL_GEMINI_ID` | No | Google AI Studio Gemini model ID |
+| `MODEL_GEMINI_NAME` | No | Display name for the Gemini model |
+
+## Adding a new LLM model (30 seconds)
+
+1. Add to `.env`: `ENABLED_MODELS=...,openrouter-mistral`
+2. Add: `MODEL_OPENROUTER_MISTRAL_ID=mistralai/mistral-7b-instruct:free`
+3. Add: `MODEL_OPENROUTER_MISTRAL_NAME=Mistral 7B`
+4. Add the registry entry in `lib/models.ts` `getEnabledModels()`
+5. Redeploy. Done. No other code changes.
 
 ## Architecture
 
@@ -47,9 +59,8 @@ Browser UI
   v                                         v
 Results dashboard <--- Prisma/Postgres <--- Orchestrator
   |                                         |
-  +-- Scorecards / charts / raw output      +-- OpenAI
-  +-- Metadata / OG report cards            +-- Gemini
-                                            +-- Claude
+  +-- Scorecards / charts / raw output      +-- OpenRouter
+  +-- Metadata / OG report cards            +-- Google AI Studio
 ```
 
 ## Team Credits

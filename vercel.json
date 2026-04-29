@@ -4,12 +4,16 @@
   "env": {
     "DATABASE_URL": "Required. PostgreSQL connection string for Prisma. Recommend Vercel Postgres or Neon.",
     "NEXT_PUBLIC_APP_URL": "Required in production. Canonical HTTPS URL used for metadata and social images.",
-    "ENABLED_MODELS": "Optional. Comma-separated model adapters to enable, e.g. openai,gemini,claude.",
-    "OPENAI_API_KEY": "Required if openai is enabled.",
-    "OPENAI_MODEL": "Optional. Defaults to gpt-4o-mini.",
+    "OPENROUTER_API_KEY": "Required if any openrouter-* model is enabled.",
     "GEMINI_API_KEY": "Required if gemini is enabled.",
-    "GEMINI_MODEL": "Optional. Defaults to gemini-1.5-flash.",
-    "CLAUDE_API_KEY": "Required if claude is enabled.",
-    "CLAUDE_MODEL": "Optional. Defaults to claude-3-5-haiku-20241022."
+    "ENABLED_MODELS": "Optional. Comma-separated model keys, e.g. openrouter-gpt,openrouter-claude,openrouter-deepseek,gemini.",
+    "MODEL_OPENROUTER_GPT_ID": "Optional. Defaults to openai/gpt-4o-mini.",
+    "MODEL_OPENROUTER_GPT_NAME": "Optional. Defaults to GPT-4o mini.",
+    "MODEL_OPENROUTER_CLAUDE_ID": "Optional. Defaults to anthropic/claude-3.5-haiku.",
+    "MODEL_OPENROUTER_CLAUDE_NAME": "Optional. Defaults to Claude 3.5 Haiku.",
+    "MODEL_OPENROUTER_DEEPSEEK_ID": "Optional. Defaults to deepseek/deepseek-r1:free.",
+    "MODEL_OPENROUTER_DEEPSEEK_NAME": "Optional. Defaults to DeepSeek R1.",
+    "MODEL_GEMINI_ID": "Optional. Defaults to gemini-2.5-flash.",
+    "MODEL_GEMINI_NAME": "Optional. Defaults to Gemini 2.5 Flash."
   }
 }

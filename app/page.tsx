@@ -23,6 +23,8 @@ const quickStats = [
   { label: "Competitive resilience", value: 91 }
 ];
 
+export const dynamic = "force-dynamic";
+
 export default function HomePage() {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-20 px-6 py-10 md:px-8 md:py-16">

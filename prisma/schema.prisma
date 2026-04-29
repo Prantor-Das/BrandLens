@@ -22,6 +22,7 @@ model AnalysisJob {
   status      AnalysisJobStatus @default(PENDING)
   brand       String
   competitors String[]
+  selectedModels String[]          @default([])
   prompt      String
   results     Json?
   insights    String?

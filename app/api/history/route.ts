@@ -47,6 +47,14 @@ export async function GET() {
     where: {
       status: "DONE"
     },
+    select: {
+      id: true,
+      brand: true,
+      competitors: true,
+      createdAt: true,
+      status: true,
+      results: true
+    },
     orderBy: {
       createdAt: "desc"
     },

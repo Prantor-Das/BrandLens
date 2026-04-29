@@ -16,20 +16,26 @@ const analyzeRequestSchema = z.object({
     .array(z.string().trim().min(1).max(100))
     .min(1, "Add at least 1 competitor to compare")
     .max(5),
-  prompt: z.string().trim().max(280).optional()
+  prompt: z.string().trim().max(280).optional(),
+  selectedModelIds: z.array(z.string().trim().min(1)).min(1).optional()
 });
 
-function getCheapestModelQuery() {
-  const enabledModels = getEnabledModels();
-  const preferredOrder = ["claude", "gemini", "openai"];
+function getCheapestModelQuery(selectedModels: string[]) {
+  const configuredModels = getEnabledModels();
+  const selectedModelSet = new Set(selectedModels);
+  const enabledModels =
+    selectedModels.length > 0
+      ? configuredModels.filter((model) => selectedModelSet.has(model.id))
+      : configuredModels;
+  const preferredOrder = ["deepseek", "gemini", "claude", "gpt"];
 
   const cheapestModel =
     preferredOrder
-      .map((id) => enabledModels.find((model) => model.id === id))
+      .map((id) => enabledModels.find((model) => model.id.toLowerCase().includes(id)))
       .find(Boolean) ?? enabledModels[0];
 
   if (!cheapestModel) {
-    throw new Error("No enabled models configured");
+    throw new Error("No enabled models configured. Add an API key for at least one selected model.");
   }
 
   return {
@@ -39,27 +45,27 @@ function getCheapestModelQuery() {
 }
 
 async function processAnalysisJob(jobId: string): Promise<void> {
-  const job = await prisma.analysisJob.findUnique({
-    where: {
-      id: jobId
-    }
-  });
-
-  if (!job) {
-    throw new Error(`Analysis job ${jobId} not found`);
-  }
-
-  await prisma.analysisJob.update({
-    where: {
-      id: jobId
-    },
-    data: {
-      status: "RUNNING"
-    }
-  });
-
   try {
-    const { enabledModels, analysisQuery } = getCheapestModelQuery();
+    const job = await prisma.analysisJob.findUnique({
+      where: {
+        id: jobId
+      }
+    });
+
+    if (!job) {
+      throw new Error(`Analysis job ${jobId} not found`);
+    }
+
+    await prisma.analysisJob.update({
+      where: {
+        id: jobId
+      },
+      data: {
+        status: "RUNNING"
+      }
+    });
+
+    const { enabledModels, analysisQuery } = getCheapestModelQuery(job.selectedModels);
     const orchestratorResults = await runOrchestrator(job.prompt, enabledModels);
 
     const pipelineResult = await runAnalysisPipeline({
@@ -93,17 +99,24 @@ async function processAnalysisJob(jobId: string): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown analysis error";
 
-    await prisma.analysisJob.update({
-      where: {
-        id: jobId
-      },
-      data: {
-        status: "ERROR",
-        results: {
-          error: message
-        } as unknown as Prisma.InputJsonValue
-      }
-    });
+    try {
+      await prisma.analysisJob.update({
+        where: {
+          id: jobId
+        },
+        data: {
+          status: "ERROR",
+          results: {
+            error: message
+          } as unknown as Prisma.InputJsonValue
+        }
+      });
+    } catch (updateError) {
+      console.error(
+        `[analyze] Failed to mark job ${jobId} as ERROR`,
+        updateError
+      );
+    }
   }
 }
 
@@ -122,11 +135,14 @@ export async function POST(request: Request) {
         brand: input.brand,
         competitors: input.competitors,
         prompt,
+        selectedModels: input.selectedModelIds ?? [],
         status: "PENDING"
       }
     });
 
-    void processAnalysisJob(job.id);
+    void (async () => {
+      await processAnalysisJob(job.id);
+    })();
 
     return NextResponse.json(
       {
@@ -162,10 +178,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Could not create analysis job"
+        error: "Could not create analysis job",
+        details: error instanceof Error ? error.message : "Unknown error"
       },
       {
-        status: 500
+        status: 503
       }
     );
   }

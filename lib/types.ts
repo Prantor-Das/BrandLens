@@ -9,6 +9,8 @@ export type AnalysisStatus = "PENDING" | "RUNNING" | "DONE" | "ERROR";
 export interface ModelAdapter {
   id: string;
   name: string;
+  isFree: boolean;
+  provider: "openrouter" | "google";
   query: (prompt: string) => Promise<string>;
 }
 
@@ -85,7 +87,8 @@ export interface HistoryItem {
   topBrandName: string | null;
 }
 
-export interface FullJobResult extends AnalysisJob {
+export interface FullJobResult extends Omit<AnalysisJob, "status"> {
+  status: AnalysisStatus;
   responses: Array<
     PrismaModelResponse & {
       brandResults: BrandResult[];

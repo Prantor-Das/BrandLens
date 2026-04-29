@@ -10,17 +10,17 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { ANALYSIS_STATUS_MESSAGES, BRAND_MODELS, type BrandModel } from "@/lib/brandlens-config";
+import { ANALYSIS_STATUS_MESSAGES } from "@/lib/brandlens-config";
 import { cn } from "@/lib/cn";
 
-const competitorInputSchema = z.string().trim().min(1).max(48);
+const competitorInputSchema = z.string().trim().min(1).max(100);
 
 const analysisSchema = z.object({
   brandName: z
     .string()
     .trim()
-    .min(2, "Enter a brand name with at least 2 characters.")
-    .max(48, "Keep the brand name under 48 characters."),
+    .min(1, "Enter a brand name.")
+    .max(100, "Keep the brand name under 100 characters."),
   competitors: z
     .array(z.string())
     .min(1, "Add at least 1 competitor to compare")
@@ -30,13 +30,23 @@ const analysisSchema = z.object({
     .max(280, "Keep the custom prompt under 280 characters.")
     .optional()
     .transform((value) => value?.trim() ?? ""),
-  models: z.array(z.enum(BRAND_MODELS)).min(1, "Select at least one model.")
+  models: z.array(z.string()).min(1, "Select at least one model.")
 });
 
 type FormValues = z.infer<typeof analysisSchema>;
 type FormErrors = Partial<Record<keyof FormValues | "competitorDraft", string>>;
+type ModelOption = {
+  id: string;
+  name: string;
+  provider: "openrouter" | "google";
+  isFree: boolean;
+};
 
-const BRAND_LIMIT = 48;
+type ModelsResponse = {
+  models: ModelOption[];
+};
+
+const BRAND_LIMIT = 100;
 const PROMPT_LIMIT = 280;
 const TRUST_ITEMS = ["3 LLMs analysed", "Real-time scoring", "Actionable insights"] as const;
 
@@ -92,14 +102,31 @@ function LoadingOverlay({ open }: { open: boolean }) {
   );
 }
 
+function getProviderBadge(model: ModelOption) {
+  if (model.provider === "google") {
+    return {
+      label: "G",
+      className:
+        "border-[color-mix(in_oklab,var(--color-success)_32%,transparent)] bg-[color-mix(in_oklab,var(--color-success)_14%,transparent)] text-[var(--color-success)]"
+    };
+  }
+
+  return {
+    label: "OR",
+    className:
+      "border-[color-mix(in_oklab,var(--color-brand)_32%,transparent)] bg-[color-mix(in_oklab,var(--color-brand)_14%,transparent)] text-[var(--color-brand)]"
+  };
+}
+
 export function AnalysisForm() {
   const router = useRouter();
   const competitorRef = useRef<HTMLInputElement>(null);
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
   const [brandName, setBrandName] = useState("");
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [competitorDraft, setCompetitorDraft] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
-  const [models, setModels] = useState<BrandModel[]>([...BRAND_MODELS]);
+  const [models, setModels] = useState<string[]>([]);
   const [showPrompt, setShowPrompt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -107,6 +134,39 @@ export function AnalysisForm() {
 
   const remainingBrandChars = BRAND_LIMIT - brandName.length;
   const remainingPromptChars = PROMPT_LIMIT - customPrompt.length;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchModels = async () => {
+      try {
+        const response = await fetch("/api/models", { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("Unable to load configured models.");
+        }
+
+        const data = (await response.json()) as ModelsResponse;
+
+        if (cancelled) {
+          return;
+        }
+
+        setAvailableModels(data.models);
+        setModels(data.models.map((model) => model.id));
+      } catch (error) {
+        if (!cancelled) {
+          setSubmitError(error instanceof Error ? error.message : "Unable to load configured models.");
+        }
+      }
+    };
+
+    void fetchModels();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const addCompetitor = (rawValue: string) => {
     const parsed = competitorInputSchema.safeParse(rawValue);
@@ -141,15 +201,15 @@ export function AnalysisForm() {
     setSubmitError("");
   };
 
-  const toggleModel = (model: BrandModel) => {
+  const toggleModel = (modelId: string) => {
     setModels((current) => {
-      if (current.includes(model)) {
+      if (current.includes(modelId)) {
         if (current.length === 1) {
           setErrors((prev) => ({ ...prev, models: "Select at least one model." }));
           return current;
         }
 
-        const next = current.filter((item) => item !== model);
+        const next = current.filter((item) => item !== modelId);
         setErrors((prev) => ({ ...prev, models: undefined }));
         setSubmitError("");
         return next;
@@ -157,11 +217,17 @@ export function AnalysisForm() {
 
       setErrors((prev) => ({ ...prev, models: undefined }));
       setSubmitError("");
-      return [...current, model];
+      return [...current, modelId];
     });
   };
 
   const handleCompetitorKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace" && !competitorDraft && competitors.length > 0) {
+      event.preventDefault();
+      setCompetitors((current) => current.slice(0, -1));
+      return;
+    }
+
     if (event.key !== "Enter" && event.key !== ",") {
       return;
     }
@@ -232,7 +298,8 @@ export function AnalysisForm() {
         body: JSON.stringify({
           brand: payload.brandName,
           competitors: payload.competitors,
-          prompt: payload.customPrompt || undefined
+          prompt: payload.customPrompt || undefined,
+          selectedModelIds: payload.models
         })
       });
 
@@ -312,27 +379,46 @@ export function AnalysisForm() {
               </Tooltip>
             </div>
             <div className="flex flex-wrap gap-2">
-              {BRAND_MODELS.map((model) => {
-                const active = models.includes(model);
+              {availableModels.map((model) => {
+                const active = models.includes(model.id);
+                const providerBadge = getProviderBadge(model);
 
                 return (
                   <button
-                    key={model}
+                    key={model.id}
                     aria-pressed={active}
                     className={cn(
-                      "inline-flex items-center rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-[var(--transition-fast)]",
+                      "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-[var(--transition-fast)]",
                       active
                         ? "border-[color-mix(in_oklab,var(--color-brand)_44%,transparent)] bg-[color-mix(in_oklab,var(--color-brand)_18%,transparent)] text-[var(--foreground)]"
                         : "border-[var(--border)] bg-[color-mix(in_oklab,var(--background-elevated)_76%,transparent)] text-[var(--foreground-muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
                     )}
-                    onClick={() => toggleModel(model)}
+                    onClick={() => toggleModel(model.id)}
                     type="button"
                   >
-                    {model}
+                    <span
+                      className={cn(
+                        "inline-flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 text-[10px] font-semibold",
+                        providerBadge.className
+                      )}
+                    >
+                      {providerBadge.label}
+                    </span>
+                    <span>{model.name}</span>
+                    {model.isFree ? (
+                      <span className="rounded-full border border-[color-mix(in_oklab,var(--color-success)_28%,transparent)] bg-[color-mix(in_oklab,var(--color-success)_12%,transparent)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-success)]">
+                        Free
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
+            {availableModels.length === 0 ? (
+              <p className="text-sm text-[var(--color-danger)]">
+                No AI models are configured. Add at least one API key before running an analysis.
+              </p>
+            ) : null}
             {errors.models ? <p className="text-sm text-[var(--color-danger)]">{errors.models}</p> : null}
           </div>
         </div>

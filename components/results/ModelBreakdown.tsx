@@ -23,6 +23,10 @@ function SentimentDot({ sentiment }: { sentiment: string }) {
   );
 }
 
+function isFreeModel(modelId: string) {
+  return modelId.toLowerCase().includes("deepseek");
+}
+
 type ModelBreakdownProps = {
   aggregate: ResultsAggregateItem[];
   brandResults: ResultsBrandResult[];
@@ -38,6 +42,15 @@ export function ModelBreakdown({
     () => [...new Set(modelResponses.map((response) => response.modelName))],
     [modelResponses]
   );
+  const modelIdsByName = useMemo(() => {
+    const result = new Map<string, string>();
+
+    for (const response of modelResponses) {
+      result.set(response.modelName, response.modelId);
+    }
+
+    return result;
+  }, [modelResponses]);
 
   const winners = useMemo(() => {
     const result = new Map<string, string>();
@@ -83,7 +96,14 @@ export function ModelBreakdown({
               <th className="px-6 py-4 font-medium text-[var(--foreground-muted)]">Brand</th>
               {modelNames.map((modelName) => (
                 <th key={modelName} className="px-4 py-4 font-medium text-[var(--foreground-muted)]">
-                  {modelName}
+                  <span className="inline-flex items-center gap-2">
+                    <span>{modelName}</span>
+                    {isFreeModel(modelIdsByName.get(modelName) ?? "") ? (
+                      <span className="rounded-full border border-[color-mix(in_oklab,var(--color-success)_28%,transparent)] bg-[color-mix(in_oklab,var(--color-success)_12%,transparent)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-success)]">
+                        Free
+                      </span>
+                    ) : null}
+                  </span>
                 </th>
               ))}
               <th className="px-4 py-4 font-medium text-[var(--foreground-muted)]">Average</th>

@@ -9,6 +9,7 @@ export const demoJobResult: FullJobResult = {
   status: "DONE",
   brand: "Nike",
   competitors: ["Adidas", "Puma"],
+  selectedModels: ["openai", "gemini", "claude"],
   prompt:
     "How do leading athletic brands compare for performance innovation, cultural relevance, and direct-to-consumer momentum?",
   insights: JSON.stringify([

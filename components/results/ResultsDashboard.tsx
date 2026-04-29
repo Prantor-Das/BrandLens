@@ -21,7 +21,8 @@ const MODEL_STYLES: Record<string, { color: string; label: string }> = {
   openai: { color: "oklch(63% 0.18 250)", label: "GPT" },
   gpt: { color: "oklch(63% 0.18 250)", label: "GPT" },
   gemini: { color: "oklch(68% 0.19 155)", label: "Gemini" },
-  claude: { color: "oklch(68% 0.16 300)", label: "Claude" }
+  claude: { color: "oklch(68% 0.16 300)", label: "Claude" },
+  deepseek: { color: "oklch(63% 0.18 255)", label: "DeepSeek" }
 };
 
 function SparklineIcon() {
@@ -75,7 +76,15 @@ function CrownIcon() {
 
 function getModelPresentation(modelId: string) {
   const normalized = modelId.toLowerCase();
-  return MODEL_STYLES[normalized] ?? { color: "var(--foreground-subtle)", label: normalized.slice(0, 3).toUpperCase() };
+  const match = Object.entries(MODEL_STYLES).find(([key]) =>
+    normalized.includes(key)
+  );
+
+  return match?.[1] ?? { color: "var(--foreground-subtle)", label: normalized.slice(0, 3).toUpperCase() };
+}
+
+function isFreeResultModel(modelId: string) {
+  return modelId.toLowerCase().includes("deepseek");
 }
 
 function formatSeconds(seconds: number) {
@@ -292,6 +301,7 @@ export function ResultsDashboard({ initialData, jobId }: ResultsDashboardProps) 
   }
 
   const totalDurationSeconds = data.modelResponses.reduce((sum, response) => sum + response.durationMs, 0) / 1000;
+  const freeModelCount = data.modelResponses.filter((response) => isFreeResultModel(response.modelId)).length;
   const brandSummary = data.aggregate.find((item) => item.brandName === data.brand) ?? data.aggregate[0] ?? null;
   const topCompetitor = data.aggregate.find((item) => item.brandName !== data.brand)?.brandName ?? "No competitor";
   const score = Math.round(brandSummary?.avgVisibilityScore ?? 0);
@@ -341,7 +351,7 @@ export function ResultsDashboard({ initialData, jobId }: ResultsDashboardProps) 
                     {data.brand}
                   </h1>
                   <p className="text-sm leading-6 text-[var(--foreground-muted)]">
-                    Analysed {data.modelResponses.length} models {"\u00b7"} {totalDurationSeconds.toFixed(1)} seconds {"\u00b7"} Top competitor: {topCompetitor}
+                    Analysed {data.modelResponses.length} models{freeModelCount > 0 ? ` (${freeModelCount} free)` : ""} {"\u00b7"} {totalDurationSeconds.toFixed(1)} seconds {"\u00b7"} Top competitor: {topCompetitor}
                   </p>
                 </div>
               </div>

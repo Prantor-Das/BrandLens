@@ -36,6 +36,7 @@ type JobWithResponses = {
   id: string;
   brand: string;
   competitors: string[];
+  selectedModels: string[];
   status: "PENDING" | "RUNNING" | "DONE" | "ERROR";
   createdAt: Date;
   results: unknown;
@@ -98,7 +99,9 @@ export async function GET(
   const enabledModels =
     responses.length > 0
       ? [...new Set(responses.map((response) => response.modelId))]
-      : getEnabledModels().map((model) => model.id);
+      : typedJob.selectedModels.length > 0
+        ? typedJob.selectedModels
+        : getEnabledModels().map((model) => model.id);
 
   if (job.status === "PENDING" || job.status === "RUNNING") {
     return NextResponse.json({

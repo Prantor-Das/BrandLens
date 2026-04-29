@@ -1,99 +1,101 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
 import { env } from "@/lib/env";
 import type { ModelAdapter } from "@/lib/types";
 
-type AdapterFactory = () => ModelAdapter | null;
-
-const joinTextBlocks = (
-  blocks: Array<{ type: string; text?: string }>
-): string => {
-  return blocks
-    .filter((block) => block.type === "text" && typeof block.text === "string")
-    .map((block) => block.text ?? "")
-    .join("\n")
-    .trim();
-};
-
-const adapterFactories: Record<string, AdapterFactory> = {
-  openai: () => {
-    if (!env.OPENAI_API_KEY) {
-      return null;
+function makeOpenRouterAdapter(
+  modelId: string,
+  displayName: string,
+  isFree = false
+): ModelAdapter {
+  const client = new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+      "HTTP-Referer": env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+      "X-Title": "BrandLens AI"
     }
+  });
 
-    const client = new OpenAI({
-      apiKey: env.OPENAI_API_KEY
-    });
+  return {
+    id: modelId,
+    name: displayName,
+    isFree,
+    provider: "openrouter",
+    query: async (prompt: string) => {
+      const res = await client.chat.completions.create({
+        model: modelId,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1000
+      });
 
-    return {
-      id: "openai",
-      name: `OpenAI (${env.OPENAI_MODEL})`,
-      query: async (prompt: string) => {
-        const response = await client.responses.create({
-          model: env.OPENAI_MODEL,
-          input: prompt
-        });
-
-        return (response.output_text ?? "").trim();
-      }
-    };
-  },
-  gemini: () => {
-    if (!env.GEMINI_API_KEY) {
-      return null;
+      return res.choices[0]?.message.content ?? "";
     }
+  };
+}
 
-    const client = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-    const model = client.getGenerativeModel({
-      model: env.GEMINI_MODEL
-    });
+function makeGeminiAdapter(modelId: string, displayName: string): ModelAdapter {
+  const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
-    return {
-      id: "gemini",
-      name: `Gemini (${env.GEMINI_MODEL})`,
-      query: async (prompt: string) => {
-        const response = await model.generateContent(prompt);
-        return response.response.text().trim();
-      }
-    };
-  },
-  claude: () => {
-    if (!env.CLAUDE_API_KEY) {
-      return null;
+  return {
+    id: modelId,
+    name: displayName,
+    isFree: true,
+    provider: "google",
+    query: async (prompt: string) => {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt
+      });
+
+      return response.text ?? "";
     }
-
-    const client = new Anthropic({
-      apiKey: env.CLAUDE_API_KEY
-    });
-
-    return {
-      id: "claude",
-      name: `Claude (${env.CLAUDE_MODEL})`,
-      query: async (prompt: string) => {
-        const response = await client.messages.create({
-          model: env.CLAUDE_MODEL,
-          max_tokens: 1024,
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ]
-        });
-
-        return joinTextBlocks(response.content).trim();
-      }
-    };
-  }
-};
-
-const parseEnabledIds = (value: string): string[] => {
-  return [...new Set(value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))];
-};
+  };
+}
 
 export function getEnabledModels(): ModelAdapter[] {
-  return parseEnabledIds(env.ENABLED_MODELS)
-    .map((id) => adapterFactories[id]?.())
-    .filter((adapter): adapter is ModelAdapter => adapter !== null);
+  const models: ModelAdapter[] = [];
+  const enabled = env.ENABLED_MODELS.split(",").map((item) => item.trim());
+
+  const registry: Record<string, () => ModelAdapter> = {
+    "openrouter-gpt": () =>
+      makeOpenRouterAdapter(
+        env.MODEL_OPENROUTER_GPT_ID ?? "openai/gpt-4o-mini",
+        env.MODEL_OPENROUTER_GPT_NAME ?? "GPT-4o mini"
+      ),
+    "openrouter-claude": () =>
+      makeOpenRouterAdapter(
+        env.MODEL_OPENROUTER_CLAUDE_ID ?? "anthropic/claude-3.5-haiku",
+        env.MODEL_OPENROUTER_CLAUDE_NAME ?? "Claude 3.5 Haiku"
+      ),
+    "openrouter-deepseek": () =>
+      makeOpenRouterAdapter(
+        env.MODEL_OPENROUTER_DEEPSEEK_ID ?? "deepseek/deepseek-r1:free",
+        env.MODEL_OPENROUTER_DEEPSEEK_NAME ?? "DeepSeek R1",
+        true
+      ),
+    gemini: () =>
+      makeGeminiAdapter(
+        env.MODEL_GEMINI_ID ?? "gemini-2.5-flash",
+        env.MODEL_GEMINI_NAME ?? "Gemini 2.5 Flash"
+      )
+  };
+
+  for (const key of enabled) {
+    if (!registry[key]) {
+      continue;
+    }
+
+    if (key.startsWith("openrouter") && !env.OPENROUTER_API_KEY) {
+      continue;
+    }
+
+    if (key === "gemini" && !env.GEMINI_API_KEY) {
+      continue;
+    }
+
+    models.push(registry[key]());
+  }
+
+  return models;
 }

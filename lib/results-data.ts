@@ -23,7 +23,7 @@ export async function getResultsPayload(jobId: string): Promise<ResultsApiPayloa
   const enabledModels =
     job.responses.length > 0
       ? [...new Set(job.responses.map((response) => response.modelId))]
-      : [];
+      : job.selectedModels;
 
   if (job.status === "PENDING" || job.status === "RUNNING") {
     return {

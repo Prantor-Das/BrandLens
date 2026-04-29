@@ -8,12 +8,16 @@
    - `DATABASE_URL`
    - `NEXT_PUBLIC_APP_URL`
    - `ENABLED_MODELS`
-   - `OPENAI_API_KEY`
-   - `OPENAI_MODEL`
+   - `OPENROUTER_API_KEY`
    - `GEMINI_API_KEY`
-   - `GEMINI_MODEL`
-   - `CLAUDE_API_KEY`
-   - `CLAUDE_MODEL`
+   - `MODEL_OPENROUTER_GPT_ID`
+   - `MODEL_OPENROUTER_GPT_NAME`
+   - `MODEL_OPENROUTER_CLAUDE_ID`
+   - `MODEL_OPENROUTER_CLAUDE_NAME`
+   - `MODEL_OPENROUTER_DEEPSEEK_ID`
+   - `MODEL_OPENROUTER_DEEPSEEK_NAME`
+   - `MODEL_GEMINI_ID`
+   - `MODEL_GEMINI_NAME`
 4. For `DATABASE_URL`, use either:
    - Vercel Postgres
    - Neon free tier
@@ -25,10 +29,11 @@
 ## Recommended Env Values
 
 - `NEXT_PUBLIC_APP_URL`: your production URL, for example `https://brandlens-ai.vercel.app`
-- `ENABLED_MODELS`: `openai,gemini,claude`
-- `OPENAI_MODEL`: `gpt-4o-mini`
-- `GEMINI_MODEL`: `gemini-1.5-flash`
-- `CLAUDE_MODEL`: `claude-3-5-haiku-20241022`
+- `ENABLED_MODELS`: `openrouter-gpt,openrouter-claude,openrouter-deepseek,gemini`
+- `MODEL_OPENROUTER_GPT_ID`: `openai/gpt-4o-mini`
+- `MODEL_OPENROUTER_CLAUDE_ID`: `anthropic/claude-3.5-haiku`
+- `MODEL_OPENROUTER_DEEPSEEK_ID`: `deepseek/deepseek-r1:free`
+- `MODEL_GEMINI_ID`: `gemini-2.5-flash`
 
 ## Notes
 
